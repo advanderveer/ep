@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-var negotiateContentTypeTests = []struct {
+var negotiateAcceptTest = []struct {
 	s            string
 	offers       []string
 	defaultOffer string
@@ -39,8 +39,8 @@ var negotiateContentTypeTests = []struct {
 	{"image/png, image/*", []string{"image/png", "image/gif"}, "", "image/png"},
 }
 
-func TestNegotiate(t *testing.T) {
-	for _, tt := range negotiateContentTypeTests {
+func TestAcceptNegotiate(t *testing.T) {
+	for _, tt := range negotiateAcceptTest {
 		r := &http.Request{Header: http.Header{"Accept": {tt.s}}}
 		actual := Negotiate("Accept", r.Header, tt.offers, tt.defaultOffer)
 		if actual != tt.expect {
@@ -67,6 +67,27 @@ func TestLanguageNegotiate(t *testing.T) {
 	for _, tt := range negotiateLanguageTests {
 		r := &http.Request{Header: http.Header{"Accept-Language": {tt.s}}}
 		actual := Negotiate("Accept-Language", r.Header, tt.offers, tt.defaultOffer)
+		if actual != tt.expect {
+			t.Errorf("NegotiateLanguage(%q, %#v, %q)=%q, want %q", tt.s, tt.offers, tt.defaultOffer, actual, tt.expect)
+		}
+	}
+}
+
+var negotiateEncodingTests = []struct {
+	s            string
+	offers       []string
+	defaultOffer string
+	expect       string
+}{
+	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"xy-YX"}, "", ""},
+	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"bogus", "gzip"}, "", "gzip"},
+	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"br", "gzip"}, "", "br"},
+}
+
+func TestEncodingNegotiate(t *testing.T) {
+	for _, tt := range negotiateEncodingTests {
+		r := &http.Request{Header: http.Header{"Accept-Encoding": {tt.s}}}
+		actual := Negotiate("Accept-Encoding", r.Header, tt.offers, tt.defaultOffer)
 		if actual != tt.expect {
 			t.Errorf("NegotiateLanguage(%q, %#v, %q)=%q, want %q", tt.s, tt.offers, tt.defaultOffer, actual, tt.expect)
 		}

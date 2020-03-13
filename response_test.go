@@ -312,6 +312,18 @@ func TestResponseRendering(t *testing.T) {
 			t.Fatalf("unexpected, got: %v", rec.Code)
 		}
 	})
+
+	t.Run("rendering InvalidInputError", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
+		res := NewResponse(rec, req, *cfg)
+		res.Render(InvalidInput, nil)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("unexpected, got: %v", rec.Code)
+		}
+	})
 }
 
 var _ http.ResponseWriter = &Response{}

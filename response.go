@@ -1,9 +1,16 @@
 package ep
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/advanderveer/ep/coding"
+)
+
+var (
+	// InvalidInput can be used explicitely to render the response as an invalid
+	// input instead of an server error
+	InvalidInput = errors.New("invalid input")
 )
 
 // Response is an http.ResponseWriter implementation that comes with
@@ -122,7 +129,7 @@ func (r *Response) Validate(in Input) (verr error) {
 // appropriate feedback in the response. If 'err' is not the same error
 // as returned by Validate() it will be handled as a server error.
 func (r *Response) Render(err error, out Output) {
-	if err != nil && err != r.state.validErr {
+	if err != nil && err != r.state.validErr && err != InvalidInput {
 		r.state.serverErr = err
 	}
 
