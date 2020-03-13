@@ -80,8 +80,8 @@ func (r *Response) Bind(in Input) (ok bool) {
 	// input may implement a reader function that takes the raw request and
 	// should initialize the input. Userfull for header reading, url params
 	// and setting default values for input.
-	if rin, rinok := in.(ReaderInput); rinok {
-		err := rin.Read(r.req)
+	if reqr, reqrok := in.(ReaderInput); reqrok {
+		err := reqr.Read(r.req)
 		if err != nil {
 			r.state.clientErr = err
 			r.render(nil)
@@ -121,7 +121,11 @@ func (r *Response) Validate(in Input) (verr error) {
 		}
 	}
 
-	r.state.validErr = in.Check()
+	// inputs may optionally implement a validation method
+	if incheck, ok := in.(CheckerInput); ok {
+		r.state.validErr = incheck.Check()
+	}
+
 	return r.state.validErr
 }
 
@@ -159,8 +163,9 @@ func (r *Response) render(out Output) (err error) {
 	}
 
 	// only call the output's head if the response header was not yet written
-	if !r.state.wroteHeader {
-		err = out.Head(r, r.req)
+	hout, hok := out.(HeaderOutput)
+	if !r.state.wroteHeader && hok {
+		err = hout.Head(r, r.req)
 		if err != nil {
 			r.state.serverErr = err
 			return

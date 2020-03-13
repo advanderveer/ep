@@ -10,7 +10,16 @@ import (
 
 // Handler will create a http.Handler from the provided endpoint.
 func Handler(ep Endpoint) http.Handler {
-	cfg := ep.Config()
+	var cfg *Config
+	if cep, ok := ep.(ConfigurerEndpoint); ok {
+		cfg = cep.Config() //@TODO allow endpoint to inherit configuration
+	}
+
+	// @TODO allow default config to be set
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
 	// @TODO make sure it is safe to read config from multiple routines
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
