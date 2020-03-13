@@ -10,14 +10,13 @@ import (
 
 // Handler will create a http.Handler from the provided endpoint.
 func Handler(ep Endpoint) http.Handler {
-	var cfg *Config
-	if cep, ok := ep.(ConfigurerEndpoint); ok {
-		cfg = cep.Config() //@TODO allow endpoint to inherit configuration
-	}
 
-	// @TODO allow default config to be set
-	if cfg == nil {
-		cfg = &Config{}
+	// @TODO allow configuration of a default config
+	cfg := &Config{}
+
+	// if the endpoint determines its own configuration, use it
+	if cep, ok := ep.(ConfigurerEndpoint); ok {
+		cep.Config(cfg)
 	}
 
 	// @TODO make sure it is safe to read config from multiple routines
@@ -32,7 +31,7 @@ func Handler(ep Endpoint) http.Handler {
 // encoding, decoding and language.
 func Negotiate(cfg Config, req *http.Request) *http.Request {
 	req = req.WithContext(
-		context.WithValue(req.Context(), epContextkey("lang"),
+		context.WithValue(req.Context(), epContextkey("language"),
 			accept.Negotiate("Accept-Language", req.Header, cfg.langs, ""),
 		))
 

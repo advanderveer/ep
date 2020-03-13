@@ -2,6 +2,7 @@ package ep
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/advanderveer/ep/coding"
@@ -98,6 +99,7 @@ func (r *Response) Bind(in Input) (ok bool) {
 	// with a decoder and input we ask the decoder to deserialize
 	err := r.dec.Decode(in)
 	if err != nil {
+		fmt.Printf("%s\n", err)
 		r.state.clientErr = err // includes io.EOF
 		r.render(nil)
 		return
@@ -146,6 +148,24 @@ func (r *Response) Render(err error, out Output) {
 	}
 }
 
+func (r *Response) serverErrorOutput(err error) ErrorOutput {
+	f := r.cfg.ServerErrFactory()
+	if f == nil {
+		return serverErrOutput{http.StatusText(http.StatusInternalServerError)}
+	}
+
+	return f(err)
+}
+
+func (r *Response) clientErrorOutput(err error) ErrorOutput {
+	f := r.cfg.ClientErrFactory()
+	if f == nil {
+		return clientErrOutput{http.StatusText(http.StatusBadRequest)}
+	}
+
+	return f(err)
+}
+
 // render solely based on the internal state of the response.
 func (r *Response) render(out Output) (err error) {
 
@@ -153,9 +173,9 @@ func (r *Response) render(out Output) (err error) {
 	// outputs.
 	switch {
 	case r.state.serverErr != nil:
-		out = r.cfg.ServerErrorOutput(r.state.serverErr)
+		out = r.serverErrorOutput(r.state.serverErr)
 	case r.state.clientErr != nil:
-		out = r.cfg.ClientErrorOutput(r.state.clientErr)
+		out = r.clientErrorOutput(r.state.clientErr)
 	}
 
 	if out == nil {
@@ -201,3 +221,25 @@ func (r *Response) WriteHeader(statusCode int) {
 	r.state.wroteHeader = true
 	r.wr.WriteHeader(statusCode)
 }
+
+// serverErrOutput is the output that is returned by default when the response
+// gets into the server error state.
+type serverErrOutput struct{ ErrorMessage string }
+
+func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+	w.WriteHeader(http.StatusInternalServerError)
+	return nil
+}
+
+func (out serverErrOutput) IsError() {}
+
+// clientErrOutput is the output that is returned by default when the response
+// gets into the client error state
+type clientErrOutput struct{ ErrorMessage string }
+
+func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+	w.WriteHeader(http.StatusBadRequest)
+	return nil
+}
+
+func (out clientErrOutput) IsError() {}

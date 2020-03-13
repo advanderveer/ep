@@ -5,16 +5,18 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] MUST   get kitchen example back to work
 - [x] MUST   also add HTTP language negotiation
 - [x] MUST   output.Head and input.Check are now optional
-- [ ] MUST 	 clean up the config and make config ergonomic 
+- [x] MUST 	 clean up the config and make config ergonomic 
 - [x] MUST   allow exec to return a InvalidInput error
 - [ ] MUST   benchmark worst case sniffing and negotiation overhead
 - [ ] MUST   run with race checker to check for race conditions
 - [ ] MUST   fully test coding package
 - [ ] MUST   test file upload usecase
+- [ ] SHOULD allow configuring defaults for endpoint config
 - [ ] SHOULD be ergonomic to have translated templates as a response
-- [ ] SHOULD make the Config method more ergonomic to use
+- [x] SHOULD make the Config method more ergonomic to use
 - [ ] SHOULD make endpoints extremely easy to test
 - [ ] SHOULD allow endpoints to be fuzzed
+- [ ] SHOULD come with nice logging support
 - [x] SHOULD remove progress keeping from reader
 - [x] COULD  make config method on endpoint optional
 - [ ] COULD  come with a nice error page for development

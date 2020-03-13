@@ -55,16 +55,11 @@ type Register struct {
 	sess *scs.SessionManager
 }
 
-func (e Register) Config() *ep.Config {
-	cfg := &ep.Config{}
-	cfg.Decoders(NewFormDecoding())
-	cfg.Encoders(epcoding.NewHTMLEncoding(RegisterPageTmpl, ErrorPageTmpl))
-	cfg.Languages("nl", "en-GB")
-
-	// @TODO should be able to handle an endpoint without any encoder and decoder
-	// configured to just render the Head() logic once.
-
-	return cfg
+func (e Register) Config(cfg *ep.Config) {
+	cfg.SetDecodings(NewFormDecoding())
+	cfg.SetEncodings(epcoding.NewHTMLEncoding(RegisterPageTmpl, ErrorPageTmpl))
+	cfg.SetLanguages("nl", "en-GB")
+	return
 }
 
 func (e Register) Handle(res *ep.Response, req *http.Request) {
@@ -100,7 +95,7 @@ func (e Register) Exec(ctx context.Context, in *RegisterInput, verr error) (err 
 	}
 
 	out.Message += e.sess.PopString(ctx, "message")
-	out.Message += ep.Lang(ctx)
+	out.Message += ep.Language(ctx)
 	return verr, out // invalid input, render as show
 }
 

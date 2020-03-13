@@ -1,103 +1,59 @@
 package ep
 
 import (
-	"context"
-	"net/http"
-
 	"github.com/advanderveer/ep/coding"
 )
 
-type epContextkey string
-
-func Lang(ctx context.Context) (s string) {
-	if v := ctx.Value(epContextkey("lang")); v != nil {
-		s = v.(string)
-	}
-	return
-}
-
-func Encoding(ctx context.Context) (enc epcoding.Encoding) {
-	if v := ctx.Value(epContextkey("encoding")); v != nil {
-		enc = v.(epcoding.Encoding)
-	}
-	return
-}
-
-func Decoding(ctx context.Context) (dec epcoding.Decoding) {
-	if v := ctx.Value(epContextkey("decoding")); v != nil {
-		dec = v.(epcoding.Decoding)
-	}
-	return
-}
-
+// Validator may be implemented and configured to allow automatic validation
+// of all endpoint inputs.
 type Validator interface {
 	Validate(v interface{}) error
 }
 
-type DefaultServerError struct {
-	ErrorMessage string
-}
-
-func (out DefaultServerError) Head(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(http.StatusInternalServerError)
-	return nil
-}
-
-func (out DefaultServerError) IsError() {}
-
-type DefaultClientError struct {
-	ErrorMessage string
-}
-
-func (out DefaultClientError) Head(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(http.StatusBadRequest)
-	return nil
-}
-
-func (out DefaultClientError) IsError() {}
-
+// Config allows endpoints to configure response formulation
 type Config struct {
 	encs  []epcoding.Encoding
 	decs  []epcoding.Decoding
 	langs []string
 
-	onServerError func(err error) ErrorOutput
-	onClientError func(err error) ErrorOutput
+	serverErrFactory func(err error) ErrorOutput
+	clientErrFactory func(err error) ErrorOutput
 
 	validator Validator
 }
 
+// Validator returns the configured validator
 func (r Config) Validator() Validator { return r.validator }
 
+// SetValidator configures a validator that is run for each endpoint input
 func (r *Config) SetValidator(v Validator) { r.validator = v }
 
-func (r *Config) Languages(langs ...string) {
-	r.langs = append(r.langs, langs...)
-}
+// Languages returns the currently supported languages
+func (r Config) Languages() []string { return r.langs }
 
-// Decoders specifies what sort of content the server is willing to decode from.
-// It will look at the Content-Type header to determine the ddecoder
-func (r *Config) Decoders(decs ...epcoding.Decoding) *Config { r.decs = decs; return r }
+// SetLanguages will configure what laguages are supported
+func (r *Config) SetLanguages(langs ...string) { r.langs = langs }
 
-// Encoders will determine to what content the server is willing to encode. It
-// will attempt to satisfy the clients 'Accept' header but may fallback to
-// a default encoding.
-func (r *Config) Encoders(encs ...epcoding.Encoding) *Config { r.encs = encs; return r }
+// SetDecodings will configure the supported input decodings
+func (r *Config) SetDecodings(decs ...epcoding.Decoding) *Config { r.decs = decs; return r }
 
-func (r *Config) OnClientError(f func(err error) ErrorOutput) { r.onClientError = f }
-func (r *Config) OnServerError(f func(err error) ErrorOutput) { r.onServerError = f }
+// Decodings returns the configured endpoint decodings
+func (r Config) Decodings() []epcoding.Decoding { return r.decs }
 
-func (r *Config) ServerErrorOutput(err error) ErrorOutput {
-	if r.onServerError == nil {
-		return DefaultServerError{http.StatusText(http.StatusInternalServerError)}
-	}
+// SetEncodings will configure the supported output encodings
+func (r *Config) SetEncodings(encs ...epcoding.Encoding) *Config { r.encs = encs; return r }
 
-	return r.onServerError(err)
-}
-func (r *Config) ClientErrorOutput(err error) ErrorOutput {
-	if r.onClientError == nil {
-		return DefaultClientError{http.StatusText(http.StatusBadRequest)}
-	}
+// Encodings returns the configured output encodings
+func (r Config) Encodings() []epcoding.Encoding { return r.encs }
 
-	return r.onClientError(err)
-}
+// SetClientErrFactory configures how client error outputs are created
+func (r *Config) SetClientErrFactory(f func(err error) ErrorOutput) { r.clientErrFactory = f }
+
+// ClientErrFactory returns the current client error factory
+func (r Config) ClientErrFactory() func(err error) ErrorOutput { return r.clientErrFactory }
+
+// SetServerErrFactory configures a factory for the creation of server error outputs
+func (r *Config) SetServerErrFactory(f func(err error) ErrorOutput) { r.serverErrFactory = f }
+
+// ServerErrFactory returns the configured factory for server errors
+func (r Config) ServerErrFactory() func(err error) ErrorOutput { return r.serverErrFactory }

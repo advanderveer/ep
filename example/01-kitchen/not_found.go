@@ -12,10 +12,9 @@ import (
 // NotFound page shows how to render a plain html template
 type NotFound struct{}
 
-func (e NotFound) Config() *ep.Config {
-	cfg := &ep.Config{}
-	cfg.Encoders(epcoding.NewHTMLEncoding(NotFoundPageTmpl, ErrorPageTmpl))
-	return cfg
+func (e NotFound) Config(cfg *ep.Config) {
+	cfg.SetEncodings(epcoding.NewHTMLEncoding(NotFoundPageTmpl, ErrorPageTmpl))
+	return
 }
 
 func (e NotFound) Handle(res *ep.Response, req *http.Request) {

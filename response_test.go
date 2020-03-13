@@ -37,7 +37,7 @@ func TestResponseBinding(t *testing.T) {
 	})
 
 	cfg = &Config{}
-	cfg.Decoders(epcoding.NewJSONDecoding())
+	cfg.SetDecodings(epcoding.NewJSONDecoding())
 
 	t.Run("bind with input and decoder", func(t *testing.T) {
 		var v in1
@@ -81,8 +81,8 @@ func TestResponseBinding(t *testing.T) {
 	})
 
 	cfg = &Config{}
-	cfg.Decoders(epcoding.NewJSONDecoding())
-	cfg.Encoders(epcoding.NewJSONEncoding())
+	cfg.SetDecodings(epcoding.NewJSONDecoding())
+	cfg.SetEncodings(epcoding.NewJSONEncoding())
 
 	t.Run("bind with syntax error, and JSON encoder to render", func(t *testing.T) {
 		var v in1
@@ -299,7 +299,7 @@ func TestResponseRendering(t *testing.T) {
 	})
 
 	cfg = &Config{}
-	cfg.Encoders(epcoding.NewJSONEncoding())
+	cfg.SetEncodings(epcoding.NewJSONEncoding())
 
 	t.Run("rendering output that cannot be encoded", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -358,8 +358,8 @@ func (o *out3) Head(w http.ResponseWriter, r *http.Request) (err error) {
 
 func TestFullyValidResponseUsage(t *testing.T) {
 	cfg := &Config{}
-	cfg.Decoders(epcoding.NewJSONDecoding())
-	cfg.Encoders(epcoding.NewJSONEncoding())
+	cfg.SetDecodings(epcoding.NewJSONDecoding())
+	cfg.SetEncodings(epcoding.NewJSONEncoding())
 
 	var in in1
 
@@ -389,7 +389,7 @@ func (o out4) Head(w http.ResponseWriter, r *http.Request) (err error) { return 
 
 func TestHTMLEncoding(t *testing.T) {
 	cfg := &Config{}
-	cfg.Encoders(epcoding.NewHTMLEncoding(vt1, et1))
+	cfg.SetEncodings(epcoding.NewHTMLEncoding(vt1, et1))
 
 	t.Run("render error output with error template", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -440,7 +440,7 @@ func TestNonDecodingInput(t *testing.T) {
 // it needs a JSON decoder to bind it
 func TestSniffedJSONInput(t *testing.T) {
 	cfg := &Config{}
-	cfg.Decoders(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
+	cfg.SetDecodings(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "rab"}`))
@@ -461,7 +461,7 @@ func TestSniffedJSONInput(t *testing.T) {
 // TestStream of inputs to bind
 func TestStreamingInput(t *testing.T) {
 	cfg := &Config{}
-	cfg.Decoders(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
+	cfg.SetDecodings(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "rab"}`+"\n"+`{"Foo": "oof"}`+"\n"+`{}`))
