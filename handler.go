@@ -35,9 +35,8 @@ func Negotiate(cfg Config, req *http.Request) *http.Request {
 
 	// if there is a request body we will turn it into a small buffered reader
 	// that allows us to sniff the content type and keep progress
-	var progress int
 	if req.Body != nil {
-		body := NewReader(req.Body, &progress)
+		body := NewReader(req.Body)
 		req.Body = body
 
 		if req.Header.Get("Content-Type") == "" {

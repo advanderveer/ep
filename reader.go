@@ -11,14 +11,13 @@ import (
 type Reader struct {
 	io.Closer
 	*bufio.Reader
-	progress *int
 }
 
 // NewReader turns an unbuffered reader into a buffered read that keeps track
 // of reading progress. The buffer size is 512 bytes to allow MIME sniffing of
 // the readers content
-func NewReader(r io.ReadCloser, p *int) *Reader {
-	return &Reader{r, bufio.NewReaderSize(r, 512), p}
+func NewReader(r io.ReadCloser) *Reader {
+	return &Reader{r, bufio.NewReaderSize(r, 512)}
 }
 
 // Sniff will use peek into the reader and tries to determine the content type
@@ -42,12 +41,5 @@ func (r *Reader) Sniff() (ct string) {
 		}
 	}
 
-	return
-}
-
-// Read data from the wrapped reader while updating the reading progress
-func (r *Reader) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	*r.progress += n
 	return
 }
