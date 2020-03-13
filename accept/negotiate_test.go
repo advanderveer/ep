@@ -48,3 +48,27 @@ func TestNegotiate(t *testing.T) {
 		}
 	}
 }
+
+var negotiateLanguageTests = []struct {
+	s            string
+	offers       []string
+	defaultOffer string
+	expect       string
+}{
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"xy-YX"}, "", ""},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"en-GB"}, "", "en-GB"},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"nl"}, "", "nl"},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"xy"}, "default", "default"},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"en-US", "en-GB"}, "", "en-GB"},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"it", "nl", "en-US"}, "", "en-US"},
+}
+
+func TestLanguageNegotiate(t *testing.T) {
+	for _, tt := range negotiateLanguageTests {
+		r := &http.Request{Header: http.Header{"Accept-Language": {tt.s}}}
+		actual := Negotiate("Accept-Language", r.Header, tt.offers, tt.defaultOffer)
+		if actual != tt.expect {
+			t.Errorf("NegotiateLanguage(%q, %#v, %q)=%q, want %q", tt.s, tt.offers, tt.defaultOffer, actual, tt.expect)
+		}
+	}
+}

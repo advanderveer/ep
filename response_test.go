@@ -28,6 +28,7 @@ func TestResponseBinding(t *testing.T) {
 
 	t.Run("bind without any input", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(nil, req, *cfg)
 		ok := res.Bind(nil)
 		if !ok {
@@ -42,6 +43,7 @@ func TestResponseBinding(t *testing.T) {
 		var v in1
 
 		req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "bar"}`))
+		req = Negotiate(*cfg, req)
 		res := NewResponse(nil, req, *cfg)
 		ok := res.Bind(&v)
 		if !ok {
@@ -58,6 +60,7 @@ func TestResponseBinding(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo: "bar"}`))
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		ok := res.Bind(&v)
 		if ok {
@@ -86,6 +89,7 @@ func TestResponseBinding(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo: "bar"}`))
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		ok := res.Bind(&v)
 		if ok {
@@ -122,6 +126,7 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 		var in in2
 
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(nil, req, *cfg)
 		ok := res.Bind(&in)
 		if !ok {
@@ -138,6 +143,7 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/bogus", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		ok := res.Bind(&in)
 		if ok {
@@ -163,6 +169,7 @@ func TestResponseValidation(t *testing.T) {
 		var v in1
 
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(nil, req, *cfg)
 		err := res.Validate(v)
 		if err != errIn1 {
@@ -176,6 +183,7 @@ func TestResponseValidation(t *testing.T) {
 
 	t.Run("validate without input", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", strings.NewReader(`{}`))
+		req = Negotiate(*cfg, req)
 		res := NewResponse(nil, req, *cfg)
 		err := res.Validate(nil)
 		if err != nil {
@@ -190,6 +198,7 @@ func TestResponseValidation(t *testing.T) {
 	t.Run("validate with input's own logic", func(t *testing.T) {
 		var v in1
 		req, _ := http.NewRequest("GET", "/", strings.NewReader(`{}`))
+		req = Negotiate(*cfg, req)
 		res := NewResponse(nil, req, *cfg)
 
 		err := res.Validate(&v)
@@ -207,6 +216,7 @@ func TestResponseValidation(t *testing.T) {
 	t.Run("with system validator", func(t *testing.T) {
 		var in in1
 		req, _ := http.NewRequest("GET", "/", strings.NewReader(`{}`))
+		req = Negotiate(*cfg, req)
 		res := NewResponse(nil, req, *cfg)
 
 		err := res.Validate(&in)
@@ -236,6 +246,7 @@ func TestResponseRendering(t *testing.T) {
 	t.Run("render without any output or error", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		res.Render(nil, nil)
 
@@ -247,6 +258,7 @@ func TestResponseRendering(t *testing.T) {
 	t.Run("rendering an non-validation error", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		res.Render(errors.New("foo"), nil)
 
@@ -259,6 +271,7 @@ func TestResponseRendering(t *testing.T) {
 		var v in1
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", strings.NewReader(`{}`))
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		verr := res.Validate(&v)
 		res.Render(verr, nil)
@@ -271,6 +284,7 @@ func TestResponseRendering(t *testing.T) {
 	t.Run("rendering output with failing Head()", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 
 		res.Render(nil, out1{})
@@ -290,6 +304,7 @@ func TestResponseRendering(t *testing.T) {
 	t.Run("rendering output that cannot be encoded", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		res.Render(nil, out2{})
 
@@ -302,8 +317,10 @@ func TestResponseRendering(t *testing.T) {
 var _ http.ResponseWriter = &Response{}
 
 func TestResponseWriting(t *testing.T) {
+	cfg := &Config{}
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
+	req = Negotiate(*cfg, req)
 	res := NewResponse(rec, req, Config{})
 	res.Header().Set("Foo", "BAR")
 	res.Write([]byte("foo"))
@@ -336,6 +353,7 @@ func TestFullyValidResponseUsage(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "bar"}`))
+	req = Negotiate(*cfg, req)
 	res := NewResponse(rec, req, *cfg)
 	if res.Bind(&in) {
 		res.Render(res.Validate(in), &out3{strings.ToUpper(in.Foo)})
@@ -364,6 +382,7 @@ func TestHTMLEncoding(t *testing.T) {
 	t.Run("render error output with error template", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		res.Render(errors.New("fail"), out4{"world"})
 		if rec.Body.String() != "hello error: Internal Server Error" {
@@ -374,6 +393,7 @@ func TestHTMLEncoding(t *testing.T) {
 	t.Run("render no error output with normal template", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 		res.Render(nil, out4{"world"})
 		if rec.Body.String() != "hello world" {
@@ -388,6 +408,7 @@ func TestNonDecodingInput(t *testing.T) {
 	cfg := Config{}
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
+	req = Negotiate(cfg, req)
 	res := NewResponse(rec, req, cfg)
 
 	var in in2
@@ -411,6 +432,7 @@ func TestSniffedJSONInput(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "rab"}`))
+	req = Negotiate(*cfg, req)
 	res := NewResponse(rec, req, *cfg)
 
 	var in in1
@@ -431,6 +453,7 @@ func TestStreamingInput(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "rab"}`+"\n"+`{"Foo": "oof"}`+"\n"+`{}`))
+	req = Negotiate(*cfg, req)
 	res := NewResponse(rec, req, *cfg)
 
 	var n int

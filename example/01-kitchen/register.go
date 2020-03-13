@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/advanderveer/ih-learn-html-sql/ep3"
-	"github.com/advanderveer/ih-learn-html-sql/ep3/coding"
+	"github.com/advanderveer/ep"
+	"github.com/advanderveer/ep/coding"
 	"github.com/alexedwards/scs/v2"
 	"github.com/gorilla/mux"
 )
@@ -57,8 +57,9 @@ type Register struct {
 
 func (e Register) Config() *ep.Config {
 	cfg := &ep.Config{}
-	cfg.Decoders() //@TODO ship with form encoder implementation
+	cfg.Decoders(NewFormDecoding())
 	cfg.Encoders(epcoding.NewHTMLEncoding(RegisterPageTmpl, ErrorPageTmpl))
+	cfg.Languages("nl", "en-GB")
 
 	// @TODO should be able to handle an endpoint without any encoder and decoder
 	// configured to just render the Head() logic once.
@@ -99,6 +100,7 @@ func (e Register) Exec(ctx context.Context, in *RegisterInput, verr error) (err 
 	}
 
 	out.Message += e.sess.PopString(ctx, "message")
+	out.Message += ep.Lang(ctx)
 	return verr, out // invalid input, render as show
 }
 

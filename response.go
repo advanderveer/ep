@@ -16,7 +16,6 @@ type Response struct {
 	enc epcoding.Encoder
 
 	state struct {
-		reqProgress int
 		wroteHeader bool
 		validErr    error // Validation error
 		clientErr   error // BadRequest status
@@ -36,22 +35,11 @@ func NewResponse(
 		cfg: cfg,
 	}
 
-	if e := epcoding.NegotiateEncoding(req.Header, cfg.encs); e != nil {
+	if e := Encoding(req.Context()); e != nil {
 		res.enc = e.Encoder(wr)
 	}
 
-	// if there is a request body we will turn it into a small buffered reader
-	// that allows us to sniff the content type and keep progress
-	if req.Body != nil {
-		body := NewReader(req.Body, &res.state.reqProgress)
-		req.Body = body
-
-		if req.Header.Get("Content-Type") == "" {
-			req.Header.Set("Content-Type", body.Sniff())
-		}
-	}
-
-	if d := epcoding.NegotiateDecoding(req.Header, cfg.decs); d != nil {
+	if d := Decoding(req.Context()); d != nil {
 		res.dec = d.Decoder(req)
 	}
 

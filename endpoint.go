@@ -41,13 +41,3 @@ type Endpoint interface {
 	// Handle is called upon every request to hit the endpoint
 	Handle(*Response, *http.Request)
 }
-
-// Handler will create a http.Handler from the provided endpoint.
-func Handler(ep Endpoint) http.Handler {
-	cfg := ep.Config()
-	// @TODO make sure it is ok to read config from multiple routines
-
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ep.Handle(NewResponse(w, req, *cfg), req)
-	})
-}

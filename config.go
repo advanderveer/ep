@@ -1,10 +1,34 @@
 package ep
 
 import (
-	"github.com/advanderveer/ep/coding"
-
+	"context"
 	"net/http"
+
+	"github.com/advanderveer/ep/coding"
 )
+
+type epContextkey string
+
+func Lang(ctx context.Context) (s string) {
+	if v := ctx.Value(epContextkey("lang")); v != nil {
+		s = v.(string)
+	}
+	return
+}
+
+func Encoding(ctx context.Context) (enc epcoding.Encoding) {
+	if v := ctx.Value(epContextkey("encoding")); v != nil {
+		enc = v.(epcoding.Encoding)
+	}
+	return
+}
+
+func Decoding(ctx context.Context) (dec epcoding.Decoding) {
+	if v := ctx.Value(epContextkey("decoding")); v != nil {
+		dec = v.(epcoding.Decoding)
+	}
+	return
+}
 
 type Validator interface {
 	Validate(v interface{}) error
@@ -33,8 +57,9 @@ func (out DefaultClientError) Head(w http.ResponseWriter, r *http.Request) error
 func (out DefaultClientError) IsError() {}
 
 type Config struct {
-	encs []epcoding.Encoding
-	decs []epcoding.Decoding
+	encs  []epcoding.Encoding
+	decs  []epcoding.Decoding
+	langs []string
 
 	onServerError func(err error) ErrorOutput
 	onClientError func(err error) ErrorOutput
@@ -45,6 +70,10 @@ type Config struct {
 func (r Config) Validator() Validator { return r.validator }
 
 func (r *Config) SetValidator(v Validator) { r.validator = v }
+
+func (r *Config) Languages(langs ...string) {
+	r.langs = append(r.langs, langs...)
+}
 
 // Decoders specifies what sort of content the server is willing to decode from.
 // It will look at the Content-Type header to determine the ddecoder
