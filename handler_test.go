@@ -12,10 +12,10 @@ func TestNegotiate(t *testing.T) {
 	jsone := epcoding.NewJSONEncoding()
 	jsond := epcoding.NewJSONDecoding()
 
-	cfg := &Config{}
-	cfg.SetLanguages("it", "en-GB")
-	cfg.SetEncodings(epcoding.NewXMLEncoding(), jsone)
-	cfg.SetDecodings(epcoding.NewXMLDecoding(), jsond)
+	cfg := New().
+		WithLanguage("it", "en-GB").
+		WithEncoding(epcoding.NewXMLEncoding(), jsone).
+		WithDecoding(epcoding.NewXMLDecoding(), jsond)
 
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{}`))
 	req.Header.Set("Accept-Language", "en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6")

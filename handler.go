@@ -8,34 +8,27 @@ import (
 	"github.com/advanderveer/ep/coding"
 )
 
-// Handler will create a http.Handler from the provided endpoint.
-func Handler(ep Endpoint) http.Handler {
+// Handler handles http for certain endpoint
+type Handler struct {
+	*Conf
+	ep Endpoint
+}
 
-	// @TODO allow configuration of a default config
-	cfg := &Config{}
-
-	// if the endpoint determines its own configuration, use it
-	if cep, ok := ep.(ConfigurerEndpoint); ok {
-		cep.Config(cfg)
-	}
-
-	// @TODO make sure it is safe to read config from multiple routines
-
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req = Negotiate(*cfg, req)
-		ep.Handle(NewResponse(w, req, *cfg), req)
-	})
+// ServeHTTP allows the endpoint to serve HTTP
+func (h Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	req = Negotiate(h.Conf, req)
+	h.ep.Handle(NewResponse(w, req, h.Conf), req)
 }
 
 // Negotiate will look at the requests' headers and set context values for
 // encoding, decoding and language.
-func Negotiate(cfg Config, req *http.Request) *http.Request {
+func Negotiate(cfg ConfReader, req *http.Request) *http.Request {
 	req = req.WithContext(
 		context.WithValue(req.Context(), epContextkey("language"),
-			accept.Negotiate("Accept-Language", req.Header, cfg.langs, ""),
+			accept.Negotiate("Accept-Language", req.Header, cfg.Languages(), ""),
 		))
 
-	if e := epcoding.NegotiateEncoding(req.Header, cfg.encs); e != nil {
+	if e := epcoding.NegotiateEncoding(req.Header, cfg.Encodings()); e != nil {
 		req = req.WithContext(
 			context.WithValue(req.Context(), epContextkey("encoding"), e),
 		)
@@ -52,7 +45,7 @@ func Negotiate(cfg Config, req *http.Request) *http.Request {
 		}
 	}
 
-	if d := epcoding.NegotiateDecoding(req.Header, cfg.decs); d != nil {
+	if d := epcoding.NegotiateDecoding(req.Header, cfg.Decodings()); d != nil {
 		req = req.WithContext(
 			context.WithValue(req.Context(), epContextkey("decoding"), d),
 		)

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/advanderveer/ep"
+	"github.com/advanderveer/ep/coding"
 	"github.com/alexedwards/scs/v2"
 	"github.com/gorilla/mux"
 )
@@ -12,10 +13,24 @@ func main() {
 	smgr := scs.New()
 
 	r := mux.NewRouter()
-	r.Path("/register").Methods("GET", "POST").Handler(ep.Handler(Register{r, smgr})).Name("register")
-	r.Path("/hello").Handler(ep.Handler(Hello{}))
-	r.Path("/kitchen").Handler(ep.Handler(Kitchen{}))
-	r.PathPrefix("/").Handler(ep.Handler(NotFound{}))
+	r.Use(smgr.LoadAndSave)
 
-	panic(http.ListenAndServe(":10010", smgr.LoadAndSave(r)))
+	r.Path("/register").Methods("GET", "POST").Name("register").Handler(ep.New().
+		WithLanguage("nl", "en-GB").
+		WithDecoding(NewFormDecoding()).
+		WithEncoding(epcoding.NewHTMLEncoding(RegisterPageTmpl, ErrorPageTmpl)).
+		Handler(Register{r, smgr}))
+
+	r.Path("/hello").Handler(ep.New().Handler(Hello{}))
+
+	r.Path("/kitchen").Handler(ep.New().
+		WithDecoding(NewFormDecoding()).
+		WithEncoding(epcoding.NewJSONEncoding()).
+		HandlerFunc(HandleKitchen))
+
+	r.PathPrefix("/").Handler(ep.New().
+		WithEncoding(epcoding.NewHTMLEncoding(NotFoundPageTmpl, ErrorPageTmpl)).
+		Handler(NotFound{}))
+
+	panic(http.ListenAndServe(":10010", r))
 }

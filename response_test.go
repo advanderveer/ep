@@ -24,7 +24,7 @@ func (in in1) Check() (err error) {
 }
 
 func TestResponseBinding(t *testing.T) {
-	cfg := &Config{}
+	cfg := New()
 
 	t.Run("bind without any input", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
@@ -36,8 +36,7 @@ func TestResponseBinding(t *testing.T) {
 		}
 	})
 
-	cfg = &Config{}
-	cfg.SetDecodings(epcoding.NewJSONDecoding())
+	cfg = New().WithDecoding(epcoding.NewJSONDecoding())
 
 	t.Run("bind with input and decoder", func(t *testing.T) {
 		var v in1
@@ -80,9 +79,7 @@ func TestResponseBinding(t *testing.T) {
 		}
 	})
 
-	cfg = &Config{}
-	cfg.SetDecodings(epcoding.NewJSONDecoding())
-	cfg.SetEncodings(epcoding.NewJSONEncoding())
+	cfg = New().WithDecoding(epcoding.NewJSONDecoding()).WithEncoding(epcoding.NewJSONEncoding())
 
 	t.Run("bind with syntax error, and JSON encoder to render", func(t *testing.T) {
 		var v in1
@@ -120,7 +117,8 @@ func (in *in2) Read(r *http.Request) error {
 }
 
 func TestResponseBindingWithReaderInput(t *testing.T) {
-	cfg := &Config{}
+	// cfg := &Config{}
+	cfg := New()
 
 	t.Run("with valid read", func(t *testing.T) {
 		var in in2
@@ -163,7 +161,7 @@ var val1err = errors.New("invalid")
 func (v val1) Validate(interface{}) error { return val1err }
 
 func TestResponseValidation(t *testing.T) {
-	cfg := &Config{}
+	cfg := New()
 
 	t.Run("validate without a request body", func(t *testing.T) {
 		var v in1
@@ -241,7 +239,7 @@ func (o out2) Head(w http.ResponseWriter, r *http.Request) (err error) {
 }
 
 func TestResponseRendering(t *testing.T) {
-	cfg := &Config{}
+	cfg := New()
 
 	t.Run("render without any output or error", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -298,8 +296,7 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
-	cfg = &Config{}
-	cfg.SetEncodings(epcoding.NewJSONEncoding())
+	cfg = New().WithEncoding(epcoding.NewJSONEncoding())
 
 	t.Run("rendering output that cannot be encoded", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -329,11 +326,11 @@ func TestResponseRendering(t *testing.T) {
 var _ http.ResponseWriter = &Response{}
 
 func TestResponseWriting(t *testing.T) {
-	cfg := &Config{}
+	cfg := New()
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = Negotiate(*cfg, req)
-	res := NewResponse(rec, req, Config{})
+	res := NewResponse(rec, req, cfg)
 	res.Header().Set("Foo", "BAR")
 	res.Write([]byte("foo"))
 
@@ -357,9 +354,7 @@ func (o *out3) Head(w http.ResponseWriter, r *http.Request) (err error) {
 }
 
 func TestFullyValidResponseUsage(t *testing.T) {
-	cfg := &Config{}
-	cfg.SetDecodings(epcoding.NewJSONDecoding())
-	cfg.SetEncodings(epcoding.NewJSONEncoding())
+	cfg := New().WithDecoding(epcoding.NewJSONDecoding()).WithEncoding(epcoding.NewJSONEncoding())
 
 	var in in1
 
@@ -388,8 +383,7 @@ var et1 = template.Must(template.New("").Parse(`hello error: {{.ErrorMessage}}`)
 func (o out4) Head(w http.ResponseWriter, r *http.Request) (err error) { return }
 
 func TestHTMLEncoding(t *testing.T) {
-	cfg := &Config{}
-	cfg.SetEncodings(epcoding.NewHTMLEncoding(vt1, et1))
+	cfg := New().WithEncoding(epcoding.NewHTMLEncoding(vt1, et1))
 
 	t.Run("render error output with error template", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -417,7 +411,7 @@ func TestHTMLEncoding(t *testing.T) {
 // An input that reads itself from the request shouldn't trigger NothingBound
 // validation error
 func TestNonDecodingInput(t *testing.T) {
-	cfg := Config{}
+	cfg := New()
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = Negotiate(cfg, req)
@@ -439,8 +433,7 @@ func TestNonDecodingInput(t *testing.T) {
 // An request without content type should use sniffing to still determine that
 // it needs a JSON decoder to bind it
 func TestSniffedJSONInput(t *testing.T) {
-	cfg := &Config{}
-	cfg.SetDecodings(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
+	cfg := New().WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "rab"}`))
@@ -460,8 +453,7 @@ func TestSniffedJSONInput(t *testing.T) {
 
 // TestStream of inputs to bind
 func TestStreamingInput(t *testing.T) {
-	cfg := &Config{}
-	cfg.SetDecodings(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
+	cfg := New().WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding())
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "rab"}`+"\n"+`{"Foo": "oof"}`+"\n"+`{}`))

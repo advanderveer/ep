@@ -10,7 +10,6 @@ import (
 )
 
 func TestReadProgress(t *testing.T) {
-
 	req, _ := http.NewRequest("GET", "/", strings.NewReader(`<?xml version="1.0" ?>`))
 	rd := NewReader(req.Body)
 

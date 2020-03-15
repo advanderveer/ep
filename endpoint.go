@@ -44,11 +44,7 @@ type Endpoint interface {
 	Handle(*Response, *http.Request)
 }
 
-// ConfigurerEndpoint can be implemented by endpoints to overwrite the default
-// configuration
-type ConfigurerEndpoint interface {
-	Endpoint
-	// @TODO rename config to something a bit more description
-	// Config is called whenever the endpoint is turned into an http.Handler
-	Config(*Config)
-}
+// EndpointFunc implements endpoint by providng just the Handle func
+type EndpointFunc func(*Response, *http.Request)
+
+func (f EndpointFunc) Handle(res *Response, req *http.Request) { f(res, req) }

@@ -2,7 +2,6 @@ package ep
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/advanderveer/ep/coding"
@@ -19,7 +18,7 @@ var (
 type Response struct {
 	wr  http.ResponseWriter
 	req *http.Request
-	cfg Config
+	cfg ConfReader
 	dec epcoding.Decoder
 	enc epcoding.Encoder
 
@@ -35,7 +34,7 @@ type Response struct {
 func NewResponse(
 	wr http.ResponseWriter,
 	req *http.Request,
-	cfg Config,
+	cfg ConfReader,
 ) (res *Response) {
 	res = &Response{
 		wr:  wr,
@@ -99,7 +98,6 @@ func (r *Response) Bind(in Input) (ok bool) {
 	// with a decoder and input we ask the decoder to deserialize
 	err := r.dec.Decode(in)
 	if err != nil {
-		fmt.Printf("%s\n", err)
 		r.state.clientErr = err // includes io.EOF
 		r.render(nil)
 		return

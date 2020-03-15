@@ -6,16 +6,10 @@ import (
 	"net/url"
 
 	"github.com/advanderveer/ep"
-	"github.com/advanderveer/ep/coding"
 )
 
 // NotFound page shows how to render a plain html template
 type NotFound struct{}
-
-func (e NotFound) Config(cfg *ep.Config) {
-	cfg.SetEncodings(epcoding.NewHTMLEncoding(NotFoundPageTmpl, ErrorPageTmpl))
-	return
-}
 
 func (e NotFound) Handle(res *ep.Response, req *http.Request) {
 	res.Render(nil, NotFoundPage{req.URL})
