@@ -8,30 +8,34 @@ import (
 	"testing"
 )
 
-func TestJSONDecoding(t *testing.T) {
+func TestXMLDecoding(t *testing.T) {
 	type Input struct{ Foo string }
 
-	d := NewJSONDecoding()
+	d := NewXMLDecoding()
+	d.SetAccepts([]string{"foo/bar"})
 
-	d.SetAccepts([]string{"foo"})
-	if !reflect.DeepEqual(d.accepts, []string{"foo"}) {
-		t.Fatalf("unexpected, got: %v", d.accepts)
+	if !reflect.DeepEqual(d.Accepts(), []string{"foo/bar"}) {
+		t.Fatalf("unepected, got: %v", d.Accepts())
 	}
 
-	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"Foo": "bbar"}`))
-	dec := d.Decoder(req)
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(`<Input><Foo>bar</Foo></Input>`))
 
 	var v Input
+	dec := d.Decoder(req)
 	err := dec.Decode(&v)
 	if err != nil {
 		t.Fatalf("unexpected, got: %v", err)
 	}
+
+	if v.Foo != "bar" {
+		t.Fatalf("unexpected, got: %v", v.Foo)
+	}
 }
 
-func TestJSONEncoding(t *testing.T) {
+func TestXMLEncoding(t *testing.T) {
 	type Output struct{ Foo string }
 
-	e := NewJSONEncoding()
+	e := NewXMLEncoding()
 	e.SetProduces("foo")
 
 	if e.Produces() != "foo" {
@@ -45,7 +49,7 @@ func TestJSONEncoding(t *testing.T) {
 		t.Fatalf("failed to encode: %v", err)
 	}
 
-	if buf.String() != `{"Foo":"Bar"}`+"\n" {
+	if buf.String() != `<Output><Foo>Bar</Foo></Output>` {
 		t.Fatalf("unexpected, got: %v", buf.String())
 	}
 }
