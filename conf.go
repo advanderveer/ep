@@ -101,7 +101,7 @@ func (c Conf) Handler(ep Endpoint) *Handler {
 
 // HandlerFunc will copy the configuration the func as a handler
 func (c Conf) HandlerFunc(epf EndpointFunc) *Handler {
-	return &Handler{c.Copy(), epf}
+	return c.Handler(epf)
 }
 
 type ConfReader interface {

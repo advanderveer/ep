@@ -2,6 +2,7 @@ package ep
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -33,5 +34,66 @@ func TestNegotiate(t *testing.T) {
 
 	if Decoding(req.Context()) != jsond {
 		t.Fatalf("unexpected, got: %v", Decoding(req.Context()))
+	}
+}
+
+type handle1Input struct{ Foo string }
+type handle1Output struct{ Bar string }
+
+func handle1(res *Response, req *http.Request) {
+	var in handle1Input
+	if res.Bind(&in) {
+		res.Render(action1(in, res.Validate(in)))
+	}
+}
+
+func action1(in handle1Input, verr error) (err error, out handle1Output) {
+	out.Bar = strings.ToUpper(in.Foo)
+	return
+}
+
+func TestBasicHandler(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"Foo": "rab"}`))
+	req.Header.Set("Accept", "application/json")
+
+	New().
+		WithLanguage("nl", "en-US").
+		WithEncoding(epcoding.NewXMLEncoding(), epcoding.NewJSONEncoding()).
+		WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding()).
+		HandlerFunc(handle1).ServeHTTP(rec, req)
+
+	if rec.Body.String() != `{"Bar":"RAB"}`+"\n" {
+		t.Fatalf("unexpected, got: %v", rec.Body.String())
+	}
+}
+
+func BenchmarkBaseOverhead(b *testing.B) {
+	h := New().HandlerFunc(func(res *Response, req *http.Request) {})
+	for i := 0; i < b.N; i++ {
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/", nil)
+		h.ServeHTTP(rec, req)
+	}
+}
+
+func BenchmarkJSONNegotiateOverhead(b *testing.B) {
+	h := New().
+		WithLanguage("nl", "en-US").
+		WithEncoding(epcoding.NewXMLEncoding(), epcoding.NewJSONEncoding()).
+		WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding()).
+		HandlerFunc(handle1)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"Foo": "rab"}`))
+		req.Header.Set("Accept", "application/json")
+		h.ServeHTTP(rec, req)
+
+		if rec.Body.String() != `{"Bar":"RAB"}`+"\n" {
+			b.Fatalf("unexpected, got: %v", rec.Body.String())
+		}
 	}
 }
