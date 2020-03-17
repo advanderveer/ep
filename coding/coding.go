@@ -8,10 +8,6 @@ import (
 	"github.com/advanderveer/ep/accept"
 )
 
-type ErrorEncode interface {
-	IsError()
-}
-
 type Encoding interface {
 	Produces() string
 	Encoder(w io.Writer) Encoder

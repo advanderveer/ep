@@ -13,16 +13,18 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] MUST   have an form decoding that just takes an interface to do the actual decoding
 - [x] MUST   benchmark worst case sniffing, negotiation and base overhead
 - [x] MUST   run with race checker to check for race conditions
+- [x] MUST   allow outputs to overwrite the template to use
+- [x] MUST   be able to cache output templates
+- [x] MUST   be ergonomic to have translated templates as a response, or other (error) customizations
 - [ ] MUST   fully test coding package
-- [ ] MUST   be ergonomic to have translated templates as a response
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
-- [ ] SHOULD make endpoints extremely easy to test
-- [ ] SHOULD allow endpoints to be fuzzed
 - [ ] SHOULD come with nice logging support
 - [x] SHOULD remove progress keeping from reader
-- [ ] SHOULD handle panics in the handle
-- [ ] Could  add Conf constructors for different types of endpoints: Rest, Form
+- [ ] SHOULD handle panics in the handle, with the same error message rendering
+- [ ] COULD  provide tooling to make endpoints extremely easy to test
+- [ ] COULD  provide tooling to fuzz endpoint
+- [ ] COULD  add Conf constructors for different types of endpoints: Rest, Form
 - [x] COULD  make config method on endpoint optional
 - [x] COULD  move per endpoint config to where Handler is called instead
 - [ ] COULD  return an error from handle as well, since that might be a common usecase

@@ -165,7 +165,7 @@ func (r *Response) Render(err error, out Output) {
 	}
 }
 
-func (r *Response) serverErrorOutput(err error) ErrorOutput {
+func (r *Response) serverErrorOutput(err error) Output {
 	f := r.cfg.ServerErrFactory()
 	if f == nil {
 		return serverErrOutput{http.StatusText(http.StatusInternalServerError)}
@@ -174,7 +174,7 @@ func (r *Response) serverErrorOutput(err error) ErrorOutput {
 	return f(err)
 }
 
-func (r *Response) clientErrorOutput(err error) ErrorOutput {
+func (r *Response) clientErrorOutput(err error) Output {
 	f := r.cfg.ClientErrFactory()
 	if f == nil {
 		return clientErrOutput{http.StatusText(http.StatusBadRequest)}
@@ -243,20 +243,18 @@ func (r *Response) WriteHeader(statusCode int) {
 // gets into the server error state.
 type serverErrOutput struct{ ErrorMessage string }
 
+func (out serverErrOutput) Template() string { return "error" }
 func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusInternalServerError)
 	return nil
 }
 
-func (out serverErrOutput) IsError() {}
-
 // clientErrOutput is the output that is returned by default when the response
 // gets into the client error state
 type clientErrOutput struct{ ErrorMessage string }
 
+func (out clientErrOutput) Template() string { return "error" }
 func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
-
-func (out clientErrOutput) IsError() {}

@@ -445,13 +445,15 @@ func TestFullyValidResponseUsage(t *testing.T) {
 
 type out4 struct{ FooBar string }
 
-var vt1 = template.Must(template.New("").Parse(`hello {{.FooBar}}`))
-var et1 = template.Must(template.New("").Parse(`hello error: {{.ErrorMessage}}`))
-
+func (o out4) Template() string                                        { return "vt1" }
 func (o out4) Head(w http.ResponseWriter, r *http.Request) (err error) { return }
 
 func TestHTMLEncoding(t *testing.T) {
-	cfg := New().WithEncoding(epcoding.NewHTMLEncoding(vt1, et1))
+	view := template.New("root")
+	view.New("vt1").Parse(`hello {{.FooBar}}`)
+	view.New("error").Parse(`hello error: {{.ErrorMessage}}`)
+
+	cfg := New().WithEncoding(epcoding.NewHTMLEncoding(view))
 
 	t.Run("render error output with error template", func(t *testing.T) {
 		rec := httptest.NewRecorder()

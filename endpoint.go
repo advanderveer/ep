@@ -2,8 +2,6 @@ package ep
 
 import (
 	"net/http"
-
-	"github.com/advanderveer/ep/coding"
 )
 
 // Input describes what is read from a request as input to the endpoint.
@@ -31,12 +29,6 @@ type Output interface{}
 type HeaderOutput interface {
 	Output
 	Head(http.ResponseWriter, *http.Request) error
-}
-
-// ErrorOutput is output data that represents a client or server error. Encoders
-// might decide to handle these differently from regular outputs
-type ErrorOutput interface {
-	epcoding.ErrorEncode
 }
 
 // Endpoint can be implemented to descibe an HTTP endpoint

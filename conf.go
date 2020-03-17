@@ -18,8 +18,8 @@ type Conf struct {
 	val   Validator
 	qdec  epcoding.URLValuesDecoder
 
-	serverErrFactory func(err error) ErrorOutput
-	clientErrFactory func(err error) ErrorOutput
+	serverErrFactory func(err error) Output
+	clientErrFactory func(err error) Output
 }
 
 // New inits an empty configuration
@@ -77,22 +77,22 @@ func (c *Conf) SetQueryDecoder(d epcoding.URLValuesDecoder) *Conf {
 }
 
 // SetClientErrFactory configures how client error outputs are created
-func (r *Conf) SetClientErrFactory(f func(err error) ErrorOutput) *Conf {
+func (r *Conf) SetClientErrFactory(f func(err error) Output) *Conf {
 	r.clientErrFactory = f
 	return r
 }
 
 // ClientErrFactory returns the current client error factory
-func (r Conf) ClientErrFactory() func(err error) ErrorOutput { return r.clientErrFactory }
+func (r Conf) ClientErrFactory() func(err error) Output { return r.clientErrFactory }
 
 // SetServerErrFactory configures a factory for the creation of server error outputs
-func (r *Conf) SetServerErrFactory(f func(err error) ErrorOutput) *Conf {
+func (r *Conf) SetServerErrFactory(f func(err error) Output) *Conf {
 	r.serverErrFactory = f
 	return r
 }
 
 // ServerErrFactory returns the configured factory for server errors
-func (r Conf) ServerErrFactory() func(err error) ErrorOutput { return r.serverErrFactory }
+func (r Conf) ServerErrFactory() func(err error) Output { return r.serverErrFactory }
 
 // Handler will copy the configuration and make the endpoint as a handler
 func (c Conf) Handler(ep Endpoint) *Handler {
@@ -110,6 +110,6 @@ type ConfReader interface {
 	Languages() []string
 	Validator() Validator
 	QueryDecoder() epcoding.URLValuesDecoder
-	ClientErrFactory() func(err error) ErrorOutput
-	ServerErrFactory() func(err error) ErrorOutput
+	ClientErrFactory() func(err error) Output
+	ServerErrFactory() func(err error) Output
 }

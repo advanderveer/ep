@@ -23,7 +23,7 @@ func TestConf(t *testing.T) {
 	xmle1 := epcoding.NewXMLEncoding()
 	xmld1 := epcoding.NewXMLDecoding()
 	v1 := val2{}
-	cef1 := func(error) ErrorOutput { return nil }
+	cef1 := func(error) Output { return nil }
 	qdec1 := qdec{}
 
 	t.Run("encoding methods", func(t *testing.T) {

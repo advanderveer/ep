@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"html/template"
 	"net/http"
 	"net/url"
 
@@ -84,6 +83,7 @@ type RegisterOutput struct {
 	Input    *RegisterInput
 }
 
+func (o RegisterOutput) Template() string { return "register" }
 func (o RegisterOutput) Head(w http.ResponseWriter, r *http.Request) (err error) {
 	if o.Redirect != nil {
 		http.Redirect(w, r, o.Redirect.String(), http.StatusMovedPermanently)
@@ -94,8 +94,7 @@ func (o RegisterOutput) Head(w http.ResponseWriter, r *http.Request) (err error)
 }
 
 // RegisterPageTmpl defines how the output will be rendered
-var RegisterPageTmpl = template.Must(template.New("").Parse(
-	`<!doctype html>
+var RegisterPageTmpl = `<!doctype html>
 <html lang="en">
   <body>
   	<p>Message: {{.Message}}</p>
@@ -107,4 +106,4 @@ var RegisterPageTmpl = template.Must(template.New("").Parse(
   		<button type="reset">reset</button>
   	</form>
   </body>
-</html>`))
+</html>`
