@@ -18,6 +18,8 @@ function run_test { # test the codebase
 		./accept \
 		&& go tool cover -html=/tmp/cover 
 
+	go test -covermode=count -coverprofile=/tmp/cover && go tool cover -html=/tmp/cover 
+
 	go test -race -test.run=TestServerHandling
 	go test -test.bench=.* -benchmem
 }

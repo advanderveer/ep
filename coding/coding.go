@@ -8,20 +8,24 @@ import (
 	"github.com/advanderveer/ep/accept"
 )
 
+// Encoding describes the production of a certain type of content
 type Encoding interface {
 	Produces() string
 	Encoder(w io.Writer) Encoder
 }
 
+// Encoder can be used for actual value encoding
 type Encoder interface {
 	Encode(v interface{}) error
 }
 
+// Decoding describes deserialization of certain content
 type Decoding interface {
 	Accepts() []string
 	Decoder(r *http.Request) Decoder
 }
 
+// Deocder can be used for actual decoding into a certain value
 type Decoder interface {
 	Decode(v interface{}) error
 }

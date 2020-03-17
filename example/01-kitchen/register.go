@@ -98,7 +98,7 @@ var RegisterPageTmpl = `<!doctype html>
 <html lang="en">
   <body>
   	<p>Message: {{.Message}}</p>
-  	<form method="post" action="{{.Action}}">
+  	<form method="post" action="{{.Action}}" enctype="multipart/form-data">
   		<input name="registration.email" type="email" autofocus required value="{{.Input.Registration.Email}}"/>
   		<input name="registration.password" type="password" required value="{{.Input.Registration.Password}}"/>
   		<input name="registration.confirm_password" type="password" required value="{{.Input.Registration.ConfirmPassword}}"/>
