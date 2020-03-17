@@ -16,12 +16,13 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] MUST   allow outputs to overwrite the template to use
 - [x] MUST   be able to cache output templates
 - [x] MUST   be ergonomic to have translated templates as a response, or other (error) customizations
-- [ ] MUST   fully test coding package
+- [x] MUST   fully test coding package
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
-- [ ] SHOULD come with nice logging support
+- [ ] SHOULD come with build-in logging support to debug client and server errors
 - [x] SHOULD remove progress keeping from reader
 - [ ] SHOULD handle panics in the handle, with the same error message rendering
+- [ ] SHOULD turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test
 - [ ] COULD  provide tooling to fuzz endpoint
 - [ ] COULD  add Conf constructors for different types of endpoints: Rest, Form
@@ -36,7 +37,7 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [ ] COULD  allow input.Read to return special error that prevents decoding
 - [ ] COULD  allow output.Head to return special error that prevents encoding
 - [ ] COULD  better test language negotiation
-- [ ] COULD  support response buffering for errors that occur halway writing
+- [ ] COULD  support response buffering for errors that occur halway writing the response
 - [ ] COULD  allow JSON encoder configuration, i.e: indentation
 - [ ] COULD  be more flexible with what content get's accepted for decoding: (i.e application/vnd.api+json should match json)
 - [ ] COULD  allow configuration what content-type will be written for a encoder: i.e: application/vnd.api+json
