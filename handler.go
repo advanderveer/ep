@@ -16,7 +16,7 @@ type Handler struct {
 
 // ServeHTTP allows the endpoint to serve HTTP
 func (h Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	req = Negotiate(h.Conf, req)
+	req = Negotiate(*h.Conf, req)
 	h.ep.Handle(NewResponse(w, req, *h.Conf), req)
 }
 

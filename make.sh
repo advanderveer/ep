@@ -17,6 +17,8 @@ function run_test { # test the codebase
 		./coding \
 		./accept \
 		&& go tool cover -html=/tmp/cover 
+
+	go test -race -test.run=TestServerHandling
 	go test -test.bench=.* -benchmem
 }
 

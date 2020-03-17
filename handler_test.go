@@ -1,9 +1,11 @@
 package ep
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/advanderveer/ep/coding"
@@ -66,6 +68,33 @@ func TestBasicHandler(t *testing.T) {
 	if rec.Body.String() != `{"Bar":"RAB"}`+"\n" {
 		t.Fatalf("unexpected, got: %v", rec.Body.String())
 	}
+}
+
+func TestServerHandling(t *testing.T) {
+	s := httptest.NewServer(New().
+		WithLanguage("nl", "en-US").
+		WithEncoding(epcoding.NewXMLEncoding(), epcoding.NewJSONEncoding()).
+		WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding()).
+		HandlerFunc(handle1))
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			resp, err := s.Client().Post(s.URL, "application/json", strings.NewReader(`{"Foo": "rab"}`))
+			if err != nil {
+				t.Fatalf("unexpected, got: %v", err)
+			}
+
+			body, _ := ioutil.ReadAll(resp.Body)
+			if string(body) != `<handle1Output><Bar>RAB</Bar></handle1Output>` {
+				t.Fatalf("unexpected, got: %v", string(body))
+			}
+		}()
+	}
+
+	wg.Wait()
 }
 
 func BenchmarkBaseOverhead(b *testing.B) {

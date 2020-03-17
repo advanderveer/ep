@@ -12,7 +12,7 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] MUST   allow (url) query decoding when request body is JSON (first decoder to implement an interface is used?)
 - [x] MUST   have an form decoding that just takes an interface to do the actual decoding
 - [x] MUST   benchmark worst case sniffing, negotiation and base overhead
-- [ ] MUST   run with race checker to check for race conditions
+- [x] MUST   run with race checker to check for race conditions
 - [ ] MUST   fully test coding package
 - [ ] MUST   be ergonomic to have translated templates as a response
 - [x] SHOULD allow configuring defaults for endpoint config
