@@ -26,6 +26,29 @@ created by net/http.(*Server).Serve
 	/usr/local/go/src/net/http/server.go:2933 +0x35c
 ```
 
+```
+server.go:3059: http: panic serving [::1]:59469: ep/response: failed to render: http: request method or response status code does not allow body
+goroutine 18 [running]:
+net/http.(*conn).serve.func1(0xc0000b2000)
+	/usr/local/go/src/net/http/server.go:1772 +0x139
+panic(0x15bbda0, 0xc000094c70)
+	/usr/local/go/src/runtime/panic.go:973 +0x396
+github.com/advanderveer/ep.(*Response).Render(0xc0000c26c0, 0x16100a0, 0x1bad7c0, 0x0, 0x0)
+	/Users/adam/Projects/go/pkg/mod/github.com/advanderveer/ep@v0.0.4/response.go:172 +0x1cd
+github.com/advanderveer/arc-assignment/endpoint.DeleteIdea.Handle(0xc0000c26c0, 0xc0000d1700)
+	/Users/adam/Projects/go/src/github.com/advanderveer/arc-assignment/endpoint/delete_idea.go:36 +0xe9
+github.com/advanderveer/ep.Handler.ServeHTTP(0xc0003fab00, 0x1771100, 0x1bac610, 0x177be20, 0xc0000bc620, 0xc0000d1700)
+	/Users/adam/Projects/go/pkg/mod/github.com/advanderveer/ep@v0.0.4/handler.go:20 +0xe1
+github.com/gorilla/mux.(*Router).ServeHTTP(0xc00032c0c0, 0x177be20, 0xc0000bc620, 0xc0000d1200)
+	/Users/adam/Projects/go/pkg/mod/github.com/gorilla/mux@v1.7.4/mux.go:210 +0xe2
+net/http.serverHandler.ServeHTTP(0xc0004421c0, 0x177be20, 0xc0000bc620, 0xc0000d1200)
+	/usr/local/go/src/net/http/server.go:2807 +0xa3
+net/http.(*conn).serve(0xc0000b2000, 0x177d2a0, 0xc00009c1c0)
+	/usr/local/go/src/net/http/server.go:1895 +0x86c
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:2933 +0x35c
+```
+
 ## Backlog
 - [x] MUST   get kitchen example back to work
 - [x] MUST   also add HTTP language negotiation
@@ -45,6 +68,7 @@ created by net/http.(*Server).Serve
 - [ ] MUST   find an alternative for comparing error interface values in Render
 - [ ] MUST   have a better way to debug unexpected error responses for development: add factories for verbose errors
 - [ ] MUST   re-think usecase of rest endpoint returning error
+- [ ] MUST   don't write body if response is 204 or other status without a body
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [ ] SHOULD come with build-in logging support to debug client and server errors

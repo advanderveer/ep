@@ -12,6 +12,10 @@ var (
 	// InvalidInput can be used explicitely to render the response as an invalid
 	// input instead of an server error
 	InvalidInput = errors.New("invalid input")
+
+	// SkipEncode can be retured by the output head to prevent any further
+	// decoding
+	SkipEncode = errors.New("skip encode")
 )
 
 // Response is an http.ResponseWriter implementation that comes with
@@ -217,7 +221,10 @@ func (r *Response) render(out Output) (err error) {
 	hout, hok := out.(HeaderOutput)
 	if !r.state.wroteHeader && hok {
 		err = hout.Head(r, r.req)
-		if err != nil {
+		if err == SkipEncode {
+			// @TODO test this
+			return
+		} else if err != nil {
 			r.state.serverErr = err
 			return
 		}

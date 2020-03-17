@@ -482,6 +482,39 @@ func TestHTMLEncoding(t *testing.T) {
 	})
 }
 
+type out5 struct{ Bar string }
+
+func (o *out5) Head(w http.ResponseWriter, r *http.Request) (err error) {
+	w.WriteHeader(204)
+	return SkipEncode
+}
+
+func TestResponseWithSkipEncode(t *testing.T) {
+	cfg := New().WithDecoding(epcoding.NewJSONDecoding()).WithEncoding(epcoding.NewJSONEncoding())
+
+	var in in1
+
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "bar"}`))
+	req = Negotiate(*cfg, req)
+	res := NewResponse(rec, req, *cfg)
+	if res.Bind(&in) {
+		res.Render(&out5{strings.ToUpper(in.Foo)}, res.Validate(in))
+	}
+
+	if res.Error() != nil {
+		t.Fatalf("unexpected, got: %v", res.Error())
+	}
+
+	if rec.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("unexpected, got: %v", rec.Header())
+	}
+
+	if rec.Body.String() != `` {
+		t.Fatalf("unexpected, got: %v", rec.Body.String())
+	}
+}
+
 // An input that reads itself from the request shouldn't trigger NothingBound
 // validation error
 func TestNonDecodingInput(t *testing.T) {
