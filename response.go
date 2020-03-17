@@ -156,6 +156,7 @@ func (r *Response) serverErrorOutput(err error) ErrorOutput {
 }
 
 func (r *Response) clientErrorOutput(err error) ErrorOutput {
+	println("client err:", err.Error())
 	f := r.cfg.ClientErrFactory()
 	if f == nil {
 		return clientErrOutput{http.StatusText(http.StatusBadRequest)}

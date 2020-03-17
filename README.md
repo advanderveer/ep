@@ -7,14 +7,15 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] MUST   output.Head and input.Check are now optional
 - [x] MUST 	 clean up the config and make config ergonomic 
 - [x] MUST   allow exec to return a InvalidInput error
-- [ ] MUST   allow (url) query decoding when request body is JSON
 - [x] MUST   allow default configuration to be configured
+- [x] MUST   test file upload usecase
+- [ ] MUST   allow (url) query decoding when request body is JSON (first decoder to implement an interface is used?)
+- [x] MUST   have an form decoding that just takes an interface to do the actual decoding
 - [ ] MUST   benchmark worst case sniffing and negotiation overhead
 - [ ] MUST   run with race checker to check for race conditions
 - [ ] MUST   fully test coding package
-- [ ] MUST   test file upload usecase
+- [ ] MUST   be ergonomic to have translated templates as a response
 - [x] SHOULD allow configuring defaults for endpoint config
-- [ ] SHOULD be ergonomic to have translated templates as a response
 - [x] SHOULD make the Config method more ergonomic to use
 - [ ] SHOULD make endpoints extremely easy to test
 - [ ] SHOULD allow endpoints to be fuzzed
