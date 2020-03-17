@@ -37,5 +37,8 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [ ] COULD  allow output.Head to return special error that prevents encoding
 - [ ] COULD  better test language negotiation
 - [ ] COULD  support response buffering for errors that occur halway writing
+- [ ] COULD  allow JSON encoder configuration, i.e: indentation
+- [ ] COULD  be more flexible with what content get's accepted for decoding: (i.e application/vnd.api+json should match json)
+- [ ] COULD  allow configuration what content-type will be written for a encoder: i.e: application/vnd.api+json
 - [ ] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
