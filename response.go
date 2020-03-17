@@ -152,7 +152,11 @@ func (r *Response) Validate(in Input) (verr error) {
 // appropriate feedback in the response. If 'err' is not the same error
 // as returned by Validate() it will be handled as a server error.
 func (r *Response) Render(out Output, err error) {
-	if err != nil && err != r.state.validErr && err != InvalidInput {
+
+	// @TODO although 'r.state.validErr' and 'err' are the same they might
+	// not have an comparable type underneath. For now we use errors.Is but
+	// think again if that is a valid solution
+	if err != nil && !errors.Is(err, r.state.validErr) && err != InvalidInput {
 		r.state.serverErr = err
 	}
 

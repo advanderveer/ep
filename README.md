@@ -1,6 +1,31 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
+## Bug: Comparing uncomparable types
+
+```
+server.go:3059: http: panic serving [::1]:56146: runtime error: comparing uncomparable type validator.ValidationErrors
+goroutine 15 [running]:
+net/http.(*conn).serve.func1(0xc000444000)
+	/usr/local/go/src/net/http/server.go:1772 +0x139
+panic(0x15e9ca0, 0xc000429520)
+	/usr/local/go/src/runtime/panic.go:973 +0x396
+github.com/advanderveer/ep.(*Response).Render(0xc0003db480, 0x161f300, 0xc000434ba0, 0x176d160, 0xc000434b80)
+	/Users/adam/Projects/go/pkg/mod/github.com/advanderveer/ep@v0.0.2/response.go:155 +0x139
+github.com/advanderveer/arc-assignment/endpoint.UserSignup.Handle(0xc0003db480, 0xc000281400)
+	/Users/adam/Projects/go/src/github.com/advanderveer/arc-assignment/endpoint/user_signup.go:29 +0x15c
+github.com/advanderveer/ep.Handler.ServeHTTP(0xc0003dac80, 0x176be80, 0x1ba4610, 0x1776920, 0xc00042a2a0, 0xc000281400)
+	/Users/adam/Projects/go/pkg/mod/github.com/advanderveer/ep@v0.0.2/handler.go:20 +0xe1
+github.com/gorilla/mux.(*Router).ServeHTTP(0xc00030c0c0, 0x1776920, 0xc00042a2a0, 0xc000280f00)
+	/Users/adam/Projects/go/pkg/mod/github.com/gorilla/mux@v1.7.4/mux.go:210 +0xe2
+net/http.serverHandler.ServeHTTP(0xc00042a1c0, 0x1776920, 0xc00042a2a0, 0xc000280f00)
+	/usr/local/go/src/net/http/server.go:2807 +0xa3
+net/http.(*conn).serve(0xc000444000, 0x1777da0, 0xc00041aec0)
+	/usr/local/go/src/net/http/server.go:1895 +0x86c
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:2933 +0x35c
+```
+
 ## Backlog
 - [x] MUST   get kitchen example back to work
 - [x] MUST   also add HTTP language negotiation
@@ -17,6 +42,8 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] MUST   be able to cache output templates
 - [x] MUST   be ergonomic to have translated templates as a response, or other (error) customizations
 - [x] MUST   fully test coding package
+- [ ] MUST   find an alternative for comparing error interface values in Render
+- [ ] MUST   have a better way to debug unexpected error responses for development: add factories for verbose errors
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [ ] SHOULD come with build-in logging support to debug client and server errors
