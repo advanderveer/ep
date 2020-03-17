@@ -44,6 +44,7 @@ created by net/http.(*Server).Serve
 - [x] MUST   fully test coding package
 - [ ] MUST   find an alternative for comparing error interface values in Render
 - [ ] MUST   have a better way to debug unexpected error responses for development: add factories for verbose errors
+- [ ] MUST   re-think usecase of rest endpoint returning error
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [ ] SHOULD come with build-in logging support to debug client and server errors

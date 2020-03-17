@@ -23,6 +23,9 @@ type Response struct {
 	dec epcoding.Decoder
 	enc epcoding.Encoder
 
+	// @TODO clean this up
+	responseContentType string
+
 	state struct {
 		wroteHeader bool
 		validErr    error // Validation error
@@ -44,6 +47,7 @@ func NewResponse(
 	}
 
 	if e := Encoding(req.Context()); e != nil {
+		res.responseContentType = e.Produces()
 		res.enc = e.Encoder(wr)
 	}
 
@@ -154,8 +158,9 @@ func (r *Response) Validate(in Input) (verr error) {
 func (r *Response) Render(out Output, err error) {
 
 	// @TODO although 'r.state.validErr' and 'err' are the same they might
-	// not have an comparable type underneath. For now we use errors.Is but
-	// think again if that is a valid solution
+	// not have an comparable type underneath. This caused a panic sometimes,
+	// so for we use errors.Is as it also passes all the test but this probably
+	// is not what we want.
 	if err != nil && !errors.Is(err, r.state.validErr) && err != InvalidInput {
 		r.state.serverErr = err
 	}
@@ -201,6 +206,11 @@ func (r *Response) render(out Output) (err error) {
 
 	if out == nil {
 		return // nothing to do
+	}
+
+	// if there is a content type for the response, set it before header written
+	if r.responseContentType != "" && !r.state.wroteHeader {
+		r.Header().Set("Content-Type", r.responseContentType)
 	}
 
 	// only call the output's head if the response header was not yet written

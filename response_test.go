@@ -438,6 +438,10 @@ func TestFullyValidResponseUsage(t *testing.T) {
 		t.Fatalf("unexpected, got: %v", res.Error())
 	}
 
+	if rec.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("unexpected, got: %v", rec.Header())
+	}
+
 	if rec.Body.String() != `{"Bar":"BAR"}`+"\n" {
 		t.Fatalf("unexpected, got: %v", rec.Body.String())
 	}
