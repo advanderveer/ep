@@ -49,7 +49,7 @@ func handle1(res *Response, req *http.Request) {
 	}
 }
 
-func action1(in handle1Input, verr error) (err error, out handle1Output) {
+func action1(in handle1Input, verr error) (out handle1Output, err error) {
 	out.Bar = strings.ToUpper(in.Foo)
 	return
 }

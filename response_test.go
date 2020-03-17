@@ -326,7 +326,7 @@ func TestResponseRendering(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
-		res.Render(errors.New("foo"), nil)
+		res.Render(nil, errors.New("foo"))
 
 		if rec.Code != http.StatusInternalServerError {
 			t.Fatalf("unexpected, got: %v", rec.Code)
@@ -353,7 +353,7 @@ func TestResponseRendering(t *testing.T) {
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
 
-		res.Render(nil, out1{})
+		res.Render(out1{}, nil)
 
 		if rec.Code != http.StatusInternalServerError {
 			t.Fatalf("unexpected, got: %v", rec.Code)
@@ -371,7 +371,7 @@ func TestResponseRendering(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
-		res.Render(nil, out2{})
+		res.Render(out2{}, nil)
 
 		if rec.Code != http.StatusInternalServerError {
 			t.Fatalf("unexpected, got: %v", rec.Code)
@@ -431,7 +431,7 @@ func TestFullyValidResponseUsage(t *testing.T) {
 	req = Negotiate(*cfg, req)
 	res := NewResponse(rec, req, *cfg)
 	if res.Bind(&in) {
-		res.Render(res.Validate(in), &out3{strings.ToUpper(in.Foo)})
+		res.Render(&out3{strings.ToUpper(in.Foo)}, res.Validate(in))
 	}
 
 	if res.Error() != nil {
@@ -460,7 +460,7 @@ func TestHTMLEncoding(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
-		res.Render(errors.New("fail"), out4{"world"})
+		res.Render(out4{"world"}, errors.New("fail"))
 		if rec.Body.String() != "hello error: Internal Server Error" {
 			t.Fatalf("unexpected, got: %v", rec.Body.String())
 		}
@@ -471,7 +471,7 @@ func TestHTMLEncoding(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
-		res.Render(nil, out4{"world"})
+		res.Render(out4{"world"}, nil)
 		if rec.Body.String() != "hello world" {
 			t.Fatalf("unexpected, got: %v", rec.Body.String())
 		}

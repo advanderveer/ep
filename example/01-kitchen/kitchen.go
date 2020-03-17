@@ -20,7 +20,7 @@ func HandleKitchen(res *ep.Response, req *http.Request) {
 	}
 }
 
-func KitchenAction(ctx context.Context, in KitchenInput, verr error) (err error, out KitchenOutput) {
+func KitchenAction(ctx context.Context, in KitchenInput, verr error) (out KitchenOutput, err error) {
 	out.Bar = strings.ToUpper(in.Foo)
 	return
 }

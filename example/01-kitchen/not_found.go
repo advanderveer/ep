@@ -11,7 +11,7 @@ import (
 type NotFound struct{}
 
 func (e NotFound) Handle(res *ep.Response, req *http.Request) {
-	res.Render(nil, NotFoundPage{req.URL})
+	res.Render(NotFoundPage{req.URL}, nil)
 	return
 }
 

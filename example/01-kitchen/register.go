@@ -49,7 +49,7 @@ func (e Register) Handle(res *ep.Response, req *http.Request) {
 	}
 }
 
-func (e Register) Exec(ctx context.Context, in *RegisterInput, verr error) (err error, out RegisterOutput) {
+func (e Register) Exec(ctx context.Context, in *RegisterInput, verr error) (out RegisterOutput, err error) {
 	out = RegisterOutput{Input: in}
 
 	if verr == nil && in.Registration != nil {
@@ -73,7 +73,7 @@ func (e Register) Exec(ctx context.Context, in *RegisterInput, verr error) (err 
 
 	out.Message += e.sess.PopString(ctx, "message")
 	out.Message += ep.Language(ctx)
-	return verr, out // invalid input, render as show
+	return out, verr // invalid input, render as show
 }
 
 type RegisterOutput struct {

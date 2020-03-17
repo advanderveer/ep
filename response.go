@@ -151,7 +151,7 @@ func (r *Response) Validate(in Input) (verr error) {
 // Render will assert the provided error and earlier errors and provide
 // appropriate feedback in the response. If 'err' is not the same error
 // as returned by Validate() it will be handled as a server error.
-func (r *Response) Render(err error, out Output) {
+func (r *Response) Render(out Output, err error) {
 	if err != nil && err != r.state.validErr && err != InvalidInput {
 		r.state.serverErr = err
 	}
