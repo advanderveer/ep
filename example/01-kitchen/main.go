@@ -25,8 +25,9 @@ func main() {
 
 	r.Path("/hello").Handler(ep.New().Handler(Hello{}))
 
+	// @TODO allow kitchen to just decode the query
 	r.Path("/kitchen").Handler(ep.New().
-		WithDecoding(epcoding.NewFormDecoding(urld)).
+		SetQueryDecoder(urld).
 		WithEncoding(epcoding.NewJSONEncoding()).
 		HandlerFunc(HandleKitchen))
 

@@ -1,6 +1,7 @@
 package ep
 
 import (
+	"net/url"
 	"reflect"
 	"testing"
 
@@ -11,6 +12,10 @@ type val2 struct{}
 
 func (v val2) Validate(interface{}) error { return nil }
 
+type qdec struct{}
+
+func (d qdec) Decode(interface{}, url.Values) error { return nil }
+
 func TestConf(t *testing.T) {
 
 	jsone1 := epcoding.NewJSONEncoding()
@@ -19,6 +24,7 @@ func TestConf(t *testing.T) {
 	xmld1 := epcoding.NewXMLDecoding()
 	v1 := val2{}
 	cef1 := func(error) ErrorOutput { return nil }
+	qdec1 := qdec{}
 
 	t.Run("encoding methods", func(t *testing.T) {
 		c1 := New()
@@ -88,6 +94,14 @@ func TestConf(t *testing.T) {
 
 		if c1.Validator() != v1 {
 			t.Fatalf("unexpected, got: %v", c1.Validator())
+		}
+	})
+
+	t.Run("set validator", func(t *testing.T) {
+		c1 := (New()).SetQueryDecoder(qdec1)
+
+		if c1.QueryDecoder() != qdec1 {
+			t.Fatalf("unexpected, got: %v", c1.QueryDecoder())
 		}
 	})
 

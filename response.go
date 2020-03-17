@@ -3,6 +3,7 @@ package ep
 import (
 	"errors"
 	"net/http"
+	"net/url"
 
 	"github.com/advanderveer/ep/coding"
 )
@@ -89,9 +90,27 @@ func (r *Response) Bind(in Input) (ok bool) {
 		}
 	}
 
+	// if there is a query decoder configured and the url has a valid query
+	// it will be decoded into the input
+	if qdec := r.cfg.QueryDecoder(); qdec != nil {
+		qvals, err := url.ParseQuery(r.req.URL.RawQuery)
+		if err != nil {
+			r.state.clientErr = err
+			r.render(nil)
+			return
+		}
+
+		err = qdec.Decode(in, qvals)
+		if err != nil {
+			r.state.clientErr = err
+			r.render(nil)
+			return
+		}
+	}
+
 	// it is valid to have no decoder and just rely on the read implementation
 	// to populate the input.
-	if r.dec == nil {
+	if r.dec == nil || r.req.ContentLength == 0 || r.req.Body == nil {
 		return true
 	}
 
@@ -156,7 +175,6 @@ func (r *Response) serverErrorOutput(err error) ErrorOutput {
 }
 
 func (r *Response) clientErrorOutput(err error) ErrorOutput {
-	println("client err:", err.Error())
 	f := r.cfg.ClientErrFactory()
 	if f == nil {
 		return clientErrOutput{http.StatusText(http.StatusBadRequest)}

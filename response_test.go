@@ -1,10 +1,12 @@
 package ep
 
 import (
+	"encoding/json"
 	"errors"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -21,6 +23,19 @@ func (in in1) Check() (err error) {
 	}
 
 	return errIn1
+}
+
+type qdec1 struct{}
+
+func (d qdec1) Decode(v interface{}, vals url.Values) error {
+	json.Unmarshal([]byte(`{"Foo": "`+vals.Get("Foo")+`"}`), v)
+	return nil
+}
+
+type qdec2 struct{}
+
+func (d qdec2) Decode(v interface{}, vals url.Values) error {
+	return errors.New("fail")
 }
 
 func TestResponseBinding(t *testing.T) {
@@ -100,7 +115,61 @@ func TestResponseBinding(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("expected bad request status, got: %v", rec.Code)
 		}
+	})
 
+	cfg = cfg.SetQueryDecoder(qdec1{})
+
+	t.Run("bind with valid query decoder", func(t *testing.T) {
+		var v in1
+
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/?Foo=bar", nil)
+		req = Negotiate(*cfg, req)
+		res := NewResponse(rec, req, *cfg)
+		ok := res.Bind(&v)
+		if !ok {
+			t.Fatalf("unexpected, got: %v", ok)
+		}
+
+		if v.Foo != "bar" {
+			t.Fatalf("unexpected, got :%v", v.Foo)
+		}
+	})
+
+	t.Run("bind with valid invalid query to decoder", func(t *testing.T) {
+		var v in1
+
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/?Foo=%?bar", nil)
+		req = Negotiate(*cfg, req)
+		res := NewResponse(rec, req, *cfg)
+		ok := res.Bind(&v)
+		if ok {
+			t.Fatalf("unexpected, got: %v", ok)
+		}
+
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("expected bad request status, got: %v", rec.Code)
+		}
+	})
+
+	cfg = cfg.SetQueryDecoder(qdec2{})
+
+	t.Run("bind with valid invalid query and error decoder", func(t *testing.T) {
+		var v in1
+
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/?Foo=bar", nil)
+		req = Negotiate(*cfg, req)
+		res := NewResponse(rec, req, *cfg)
+		ok := res.Bind(&v)
+		if ok {
+			t.Fatalf("unexpected, got: %v", ok)
+		}
+
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("expected bad request status, got: %v", rec.Code)
+		}
 	})
 }
 
@@ -117,7 +186,6 @@ func (in *in2) Read(r *http.Request) error {
 }
 
 func TestResponseBindingWithReaderInput(t *testing.T) {
-	// cfg := &Config{}
 	cfg := New()
 
 	t.Run("with valid read", func(t *testing.T) {

@@ -7,13 +7,13 @@ import (
 	"net/url"
 )
 
-type UrlValuesDecoder interface {
+type URLValuesDecoder interface {
 	Decode(v interface{}, d url.Values) error
 }
 
-type FormDecoding struct{ d UrlValuesDecoder }
+type FormDecoding struct{ d URLValuesDecoder }
 
-func NewFormDecoding(d UrlValuesDecoder) *FormDecoding { return &FormDecoding{d} }
+func NewFormDecoding(d URLValuesDecoder) *FormDecoding { return &FormDecoding{d} }
 
 func (d FormDecoding) Accepts() []string {
 	return []string{
@@ -28,7 +28,7 @@ func (d FormDecoding) Decoder(r *http.Request) Decoder {
 
 type FormDecoder struct {
 	r *http.Request
-	d UrlValuesDecoder
+	d URLValuesDecoder
 }
 
 func (d FormDecoder) Decode(v interface{}) (err error) {
@@ -38,22 +38,8 @@ func (d FormDecoder) Decode(v interface{}) (err error) {
 
 	defer func() { d.r = nil }() // only decode once, no streaming
 
-	// @TODO but if what if json is first decoder and we still want to
-	// decode queries: querie decoding needs to be first-class configuration
-
-	// always parse query with this decoder
-	q, err := url.ParseQuery(d.r.URL.RawQuery)
-	if err != nil {
-		return err
-	}
-
-	err = d.d.Decode(v, q)
-	if err != nil {
-		return err
-	}
-
 	// without a body, nothing left to do
-	if d.r.ContentLength == 0 {
+	if d.r.ContentLength == 0 || d.r.Body == nil {
 		return
 	}
 
