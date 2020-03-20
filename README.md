@@ -1,6 +1,9 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
+## Render error comparison
+In general the goals is to allow users to just return the validation error
+to indicate that the output should be rendered normally, but return earlier
 
 ## Backlog
 - [x] MUST   get kitchen example back to work
@@ -18,7 +21,7 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] MUST   be able to cache output templates
 - [x] MUST   be ergonomic to have translated templates as a response, or other (error) customizations
 - [x] MUST   fully test coding package
-- [ ] MUST   find an alternative for comparing error interface values in Render
+- [x] MUST   find an alternative for comparing error interface values in Render: not actually needed
 - [ ] MUST   have a better way to debug unexpected error responses for development: add factories for verbose errors
 - [ ] MUST   re-think usecase of rest endpoint returning error
 - [ ] MUST   don't write body if response is 204 or other status without a body

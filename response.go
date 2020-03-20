@@ -9,10 +9,6 @@ import (
 )
 
 var (
-	// InvalidInput can be used explicitely to render the response as an invalid
-	// input instead of an server error
-	InvalidInput = errors.New("invalid input")
-
 	// SkipEncode can be retured by the output head to prevent any further
 	// decoding
 	SkipEncode = errors.New("skip encode")
@@ -160,12 +156,7 @@ func (r *Response) Validate(in Input) (verr error) {
 // appropriate feedback in the response. If 'err' is not the same error
 // as returned by Validate() it will be handled as a server error.
 func (r *Response) Render(out Output, err error) {
-
-	// @TODO although 'r.state.validErr' and 'err' are the same they might
-	// not have an comparable type underneath. This caused a panic sometimes,
-	// so for we use errors.Is as it also passes all the test but this probably
-	// is not what we want.
-	if err != nil && !errors.Is(err, r.state.validErr) && err != InvalidInput {
+	if err != nil {
 		r.state.serverErr = err
 	}
 
