@@ -17,6 +17,7 @@ type Conf struct {
 	decs  []epcoding.Decoding
 	val   Validator
 	qdec  epcoding.URLValuesDecoder
+	logs  Logger
 
 	serverErrFactory  func(err error) Output
 	clientErrFactory  func(err error) Output
@@ -34,6 +35,7 @@ func (c Conf) Copy() (cc *Conf) {
 		decs:  make([]epcoding.Decoding, len(c.decs)),
 		val:   c.val,
 		qdec:  c.qdec,
+		logs:  c.logs,
 
 		serverErrFactory:  c.serverErrFactory,
 		clientErrFactory:  c.clientErrFactory,
@@ -70,6 +72,10 @@ func (c *Conf) WithLanguage(langs ...string) *Conf { c.langs = append(c.langs, l
 // Validator returns the configured input validator
 func (c Conf) Validator() Validator            { return c.val }
 func (c *Conf) SetValidator(v Validator) *Conf { c.val = v; return c }
+
+// Logger returns the configured logger
+func (c Conf) Logger() Logger            { return c.logs }
+func (c *Conf) SetLogger(l Logger) *Conf { c.logs = l; return c }
 
 // QueryDecoder configures the query to be decoded into the input struct
 func (c Conf) QueryDecoder() epcoding.URLValuesDecoder { return c.qdec }
@@ -120,6 +126,7 @@ type ConfReader interface {
 	Decodings() []epcoding.Decoding
 	Languages() []string
 	Validator() Validator
+	Logger() Logger
 	QueryDecoder() epcoding.URLValuesDecoder
 	ServerErrFactory() func(err error) Output
 	ClientErrFactory() func(err error) Output

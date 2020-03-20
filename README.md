@@ -1,10 +1,9 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
-## Debugging errors more easily
-Specifically bad request and internal server errors
-Would be nice if there are nice error pages that can be rendered
-Logging could also help with that
+# Logging and Easy debugging
+- optionally, provide a logger that allows printing feedback on errors
+- optionally, provide a way to provide a structured logger
 
 ## Backlog
 - [x] MUST   get kitchen example back to work
@@ -23,15 +22,16 @@ Logging could also help with that
 - [x] MUST   be ergonomic to have translated templates as a response, or other (error) customizations
 - [x] MUST   fully test coding package
 - [x] MUST   find an alternative for comparing error interface values in Render: not needed, users can just retur nil
-- [ ] MUST   have a better way to debug unexpected error responses for development: add factories for verbose errors
+- [x] MUST   have a better way to debug unexpected error responses for development: add client and server error logging
 - [x] MUST   handle panics in the handle, with the server error message rendering, should also be easy to debug
 - [x] MUST   re-think usecase of rest endpoint returning error
 - [x] MUST   don't write body if response is 204 or other status without a body
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
-- [ ] SHOULD come with build-in logging support to debug client and server errors
+- [x] SHOULD come with build-in logging support to debug client and server errors
 - [x] SHOULD remove progress keeping from reader
-- [ ] SHOULD turn most of the coding tests into table tests
+- [ ] SHOULD add more logging methods to the logger to track
+- [ ] COULD  turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test
 - [ ] COULD  provide tooling to fuzz endpoint
 - [ ] COULD  add Conf constructors for different types of endpoints: Rest, Form
@@ -49,6 +49,7 @@ Logging could also help with that
 - [ ] COULD  allow JSON encoder configuration, i.e: indentation
 - [ ] COULD  be more flexible with what content get's accepted for decoding: (i.e application/vnd.api+json should match json)
 - [x] COULD  allow configuration what content-type will be written for a encoder: i.e: application/vnd.api+json
+- [ ] COULD  also handle panics in the negotiation code
 - [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
 - [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function

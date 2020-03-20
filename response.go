@@ -3,6 +3,7 @@ package ep
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -18,11 +19,12 @@ var (
 // Response is an http.ResponseWriter implementation that comes with
 // a host of untility method for common tasks in http handling.
 type Response struct {
-	wr  http.ResponseWriter
-	req *http.Request
-	cfg ConfReader
-	dec epcoding.Decoder
-	enc epcoding.Encoder
+	wr   http.ResponseWriter
+	req  *http.Request
+	cfg  ConfReader
+	dec  epcoding.Decoder
+	enc  epcoding.Encoder
+	logs Logger
 
 	// @TODO clean this up
 	responseContentType string
@@ -57,6 +59,11 @@ func NewResponse(
 	}
 
 	res.state.wroteHeader = -1
+	res.logs = cfg.Logger()
+	if res.logs == nil {
+		res.logs = NopLogger{}
+	}
+
 	return
 }
 
@@ -122,7 +129,9 @@ func (r *Response) Bind(in Input) (ok bool) {
 
 	// with a decoder and input we ask the decoder to deserialize
 	err := r.dec.Decode(in)
-	if err != nil {
+	if err == io.EOF {
+		return false // just be done, no error
+	} else if err != nil {
 		r.state.clientErr = err // includes io.EOF
 		r.render(nil)
 		return
@@ -181,6 +190,7 @@ func (r *Response) Render(out Output, err error) {
 }
 
 func (r *Response) serverErrorOutput(err error) Output {
+	r.logs.LogServerErrRender(err)
 	f := r.cfg.ServerErrFactory()
 	if f == nil {
 		return serverErrOutput{http.StatusText(http.StatusInternalServerError)}
@@ -190,6 +200,7 @@ func (r *Response) serverErrorOutput(err error) Output {
 }
 
 func (r *Response) clientErrorOutput(err error) Output {
+	r.logs.LogClientErrRender(err)
 	f := r.cfg.ClientErrFactory()
 	if f == nil {
 		return clientErrOutput{http.StatusText(http.StatusBadRequest)}

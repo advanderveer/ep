@@ -1,9 +1,11 @@
 package ep
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"html/template"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -204,6 +206,10 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 		}
 	})
 
+	lbuf := bytes.NewBuffer(nil)
+	logs := log.New(lbuf, "", 0)
+	cfg = cfg.SetLogger(NewStdLogger(logs))
+
 	t.Run("with read error", func(t *testing.T) {
 		var in in2
 
@@ -218,6 +224,10 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("unexpected, got: %v", rec.Code)
+		}
+
+		if !strings.Contains(lbuf.String(), "fail") {
+			t.Fatalf("log should show error, got: %v", lbuf.String())
 		}
 	})
 }
@@ -313,6 +323,10 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
+	lbuf := bytes.NewBuffer(nil)
+	logs := log.New(lbuf, "", 0)
+	cfg = cfg.SetLogger(NewStdLogger(logs))
+
 	t.Run("rendering an non-validation error", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
@@ -322,6 +336,10 @@ func TestResponseRendering(t *testing.T) {
 
 		if rec.Code != http.StatusInternalServerError {
 			t.Fatalf("unexpected, got: %v", rec.Code)
+		}
+
+		if !strings.Contains(lbuf.String(), "foo") {
+			t.Fatalf("log should show error, got: %v", lbuf.String())
 		}
 	})
 
@@ -582,6 +600,10 @@ func TestStreamingInput(t *testing.T) {
 
 	if n != 3 {
 		t.Fatalf("unexpected, got: %v", n)
+	}
+
+	if rec.Code != 200 {
+		t.Fatalf("unexpected, got: %v", rec.Code)
 	}
 }
 
