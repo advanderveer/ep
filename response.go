@@ -2,6 +2,7 @@ package ep
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -252,6 +253,27 @@ func (r *Response) render(out Output) (err error) {
 	}
 
 	return
+}
+
+// RecoverRender allows the response to recover from a panic in the stack and
+// render an internal server error.
+func (r *Response) RecoverRender() {
+	reco := recover()
+	if reco == nil {
+		return
+	}
+
+	var perr error
+	switch rt := reco.(type) {
+	case error:
+		perr = rt
+	case string:
+		perr = errors.New(rt)
+	default:
+		perr = errors.New(fmt.Sprint(rt))
+	}
+
+	r.Render(nil, perr)
 }
 
 // Header implements the http.ResponseWriter's "Header" method

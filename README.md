@@ -1,19 +1,10 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
-## REST endpoint error handling
-- We had to use a lot of Head implementations to return 422 for validation errors:
-	- head() that asserts an error field
-
-- In non REST pages we want to render the same html but with errors in the output
-  In REST we want a special output struct with the validation error
-
-- And in REST cases we might need to report validation errors from exec without
-  using the success: like, user already exists: check your params
-
-For REST we now leave this to the user, fur non-rest thats not a problem because
-they need to decide how to render the validation errors anyway. But for REST
-this is common and should be a usecase to consider
+## Debugging errors more easily
+Specifically bad request and internal server errors
+Would be nice if there are nice error pages that can be rendered
+Logging could also help with that
 
 ## Backlog
 - [x] MUST   get kitchen example back to work
@@ -33,20 +24,19 @@ this is common and should be a usecase to consider
 - [x] MUST   fully test coding package
 - [x] MUST   find an alternative for comparing error interface values in Render: not needed, users can just retur nil
 - [ ] MUST   have a better way to debug unexpected error responses for development: add factories for verbose errors
+- [x] MUST   handle panics in the handle, with the server error message rendering, should also be easy to debug
 - [x] MUST   re-think usecase of rest endpoint returning error
 - [x] MUST   don't write body if response is 204 or other status without a body
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [ ] SHOULD come with build-in logging support to debug client and server errors
 - [x] SHOULD remove progress keeping from reader
-- [ ] SHOULD handle panics in the handle, with the same error message rendering
 - [ ] SHOULD turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test
 - [ ] COULD  provide tooling to fuzz endpoint
 - [ ] COULD  add Conf constructors for different types of endpoints: Rest, Form
 - [x] COULD  make config method on endpoint optional
 - [x] COULD  move per endpoint config to where Handler is called instead
-- [ ] COULD  return an error from handle as well, since that might be a common usecase
 - [ ] COULD  come with a nice error page for development
 - [ ] COULD  rename 'epcoding' to just 'coding'
 - [ ] COULD  rename coding to something else entirely, cofusing with HTTP encoding header name
@@ -58,6 +48,7 @@ this is common and should be a usecase to consider
 - [ ] COULD  support response buffering for errors that occur halway writing the response
 - [ ] COULD  allow JSON encoder configuration, i.e: indentation
 - [ ] COULD  be more flexible with what content get's accepted for decoding: (i.e application/vnd.api+json should match json)
-- [ ] COULD  allow configuration what content-type will be written for a encoder: i.e: application/vnd.api+json
-- [ ] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler
+- [x] COULD  allow configuration what content-type will be written for a encoder: i.e: application/vnd.api+json
+- [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
+- [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function
