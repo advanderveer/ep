@@ -18,8 +18,9 @@ type Conf struct {
 	val   Validator
 	qdec  epcoding.URLValuesDecoder
 
-	serverErrFactory func(err error) Output
-	clientErrFactory func(err error) Output
+	serverErrFactory  func(err error) Output
+	clientErrFactory  func(err error) Output
+	invalidErrFactory func(err error) Output
 }
 
 // New inits an empty configuration
@@ -34,8 +35,9 @@ func (c Conf) Copy() (cc *Conf) {
 		val:   c.val,
 		qdec:  c.qdec,
 
-		serverErrFactory: c.serverErrFactory,
-		clientErrFactory: c.clientErrFactory,
+		serverErrFactory:  c.serverErrFactory,
+		clientErrFactory:  c.clientErrFactory,
+		invalidErrFactory: c.invalidErrFactory,
 	}
 
 	copy(cc.langs, c.langs)
@@ -76,6 +78,15 @@ func (c *Conf) SetQueryDecoder(d epcoding.URLValuesDecoder) *Conf {
 	return c
 }
 
+// SetInvalidErrFactory configures how invalid input errors are created
+func (r *Conf) SetInvalidErrFactory(f func(err error) Output) *Conf {
+	r.invalidErrFactory = f
+	return r
+}
+
+// InvalidErrFactory returns the current invalid input error factory
+func (r Conf) InvalidErrFactory() func(err error) Output { return r.invalidErrFactory }
+
 // SetClientErrFactory configures how client error outputs are created
 func (r *Conf) SetClientErrFactory(f func(err error) Output) *Conf {
 	r.clientErrFactory = f
@@ -110,6 +121,7 @@ type ConfReader interface {
 	Languages() []string
 	Validator() Validator
 	QueryDecoder() epcoding.URLValuesDecoder
-	ClientErrFactory() func(err error) Output
 	ServerErrFactory() func(err error) Output
+	ClientErrFactory() func(err error) Output
+	InvalidErrFactory() func(err error) Output
 }

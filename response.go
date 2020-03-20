@@ -28,6 +28,7 @@ type Response struct {
 
 	state struct {
 		wroteHeader bool
+		invalidErr  error
 		clientErr   error // BadRequest status
 		serverErr   error // InternalServerError
 	}
@@ -65,6 +66,8 @@ func (r *Response) Error() error {
 		return r.state.serverErr
 	case r.state.clientErr != nil:
 		return r.state.clientErr
+	case r.state.invalidErr != nil:
+		return r.state.invalidErr
 	default:
 		return nil
 	}
@@ -155,17 +158,15 @@ func (r *Response) Validate(in Input) (verr error) {
 func (r *Response) Render(out Output, err error) {
 	if err != nil {
 
-		// @TODO if the err is an InvalidInput error, we want to render
-		// it as a client input error output. This is mainly usefull
-		// for rest applications since. Non rest would render it as feedback
-		// to the user in the regular form page
-		// @TODO do we want to do anything with the r.state.validationErr?
-		// might be that exec wants to return its own validation error anyway
-
-		// @TODO If err == nil, do we still want to render clientErr if
-		// it was detected?
-
-		r.state.serverErr = err
+		// if the error is marked as invalid input we will render
+		// it as an parameter error response. Mainly usefull for
+		// REST endpoints
+		var iierr *InvalidInputError
+		if errors.As(err, &iierr) {
+			r.state.invalidErr = iierr.Unwrap()
+		} else {
+			r.state.serverErr = err
+		}
 	}
 
 	err = r.render(out) // first pass
@@ -195,6 +196,15 @@ func (r *Response) clientErrorOutput(err error) Output {
 	return f(err)
 }
 
+func (r *Response) invalidErrorOutput(err error) Output {
+	f := r.cfg.InvalidErrFactory()
+	if f == nil {
+		return invalidErrOutput{err.Error()}
+	}
+
+	return f(err)
+}
+
 // render solely based on the internal state of the response.
 func (r *Response) render(out Output) (err error) {
 
@@ -205,6 +215,8 @@ func (r *Response) render(out Output) (err error) {
 		out = r.serverErrorOutput(r.state.serverErr)
 	case r.state.clientErr != nil:
 		out = r.clientErrorOutput(r.state.clientErr)
+	case r.state.invalidErr != nil:
+		out = r.invalidErrorOutput(r.state.invalidErr)
 	}
 
 	if out == nil {
@@ -257,24 +269,4 @@ func (r *Response) Write(b []byte) (int, error) {
 func (r *Response) WriteHeader(statusCode int) {
 	r.state.wroteHeader = true
 	r.wr.WriteHeader(statusCode)
-}
-
-// serverErrOutput is the output that is returned by default when the response
-// gets into the server error state.
-type serverErrOutput struct{ ErrorMessage string }
-
-func (out serverErrOutput) Template() string { return "error" }
-func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(http.StatusInternalServerError)
-	return nil
-}
-
-// clientErrOutput is the output that is returned by default when the response
-// gets into the client error state
-type clientErrOutput struct{ ErrorMessage string }
-
-func (out clientErrOutput) Template() string { return "error" }
-func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(http.StatusBadRequest)
-	return nil
 }

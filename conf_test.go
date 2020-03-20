@@ -115,5 +115,11 @@ func TestConf(t *testing.T) {
 		if c1.ServerErrFactory() == nil {
 			t.Fatalf("unexpected")
 		}
+
+		c1 = c1.SetInvalidErrFactory(cef1)
+		if c1.InvalidErrFactory() == nil {
+			t.Fatalf("unexpected")
+		}
+
 	})
 }

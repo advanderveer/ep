@@ -370,17 +370,28 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
-	// t.Run("rendering InvalidInputError", func(t *testing.T) {
-	// 	rec := httptest.NewRecorder()
-	// 	req, _ := http.NewRequest("GET", "/", nil)
-	// 	req = Negotiate(*cfg, req)
-	// 	res := NewResponse(rec, req, *cfg)
-	// 	res.Render(nil, nil)
+	t.Run("rendering InvalidInputError", func(t *testing.T) {
+		e := errors.New("foo")
 
-	// 	if rec.Code != http.StatusOK {
-	// 		t.Fatalf("unexpected, got: %v", rec.Code)
-	// 	}
-	// })
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
+		res := NewResponse(rec, req, *cfg)
+		res.Render(nil, InvalidInput(e))
+
+		if res.Error() != e {
+			t.Fatalf("unexpected, got: %v", res.Error())
+		}
+
+		if rec.Code != 422 {
+			t.Fatalf("unexpected, got: %v", rec.Code)
+		}
+
+		if rec.Body.String() != `{"ErrorMessage":"foo"}`+"\n" {
+			t.Fatalf("unexpected, got: %v", rec.Body.String())
+		}
+
+	})
 }
 
 var _ http.ResponseWriter = &Response{}
