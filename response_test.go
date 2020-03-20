@@ -241,10 +241,6 @@ func TestResponseValidation(t *testing.T) {
 		if err != errIn1 {
 			t.Fatalf("unexpected, got: %v", err)
 		}
-
-		if res.Error() != errIn1 {
-			t.Fatalf("unexpected, got: %v", res.Error())
-		}
 	})
 
 	t.Run("validate without input", func(t *testing.T) {
@@ -270,10 +266,6 @@ func TestResponseValidation(t *testing.T) {
 		err := res.Validate(&v)
 		if err != errIn1 {
 			t.Fatalf("unexpected, got: %v", err)
-		}
-
-		if res.Error() != errIn1 {
-			t.Fatalf("unexpected, got: %v", res.Error())
 		}
 	})
 

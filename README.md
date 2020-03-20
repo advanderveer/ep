@@ -1,9 +1,19 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
-## Render error comparison
-In general the goals is to allow users to just return the validation error
-to indicate that the output should be rendered normally, but return earlier
+## REST endpoint error handling
+- We had to use a lot of Head implementations to return 422 for validation errors:
+	- head() that asserts an error field
+
+- In non REST pages we want to render the same html but with errors in the output
+  In REST we want a special output struct with the validation error
+
+- And in REST cases we might need to report validation errors from exec without
+  using the success: like, user already exists: check your params
+
+For REST we now leave this to the user, fur non-rest thats not a problem because
+they need to decide how to render the validation errors anyway. But for REST
+this is common and should be a usecase to consider
 
 ## Backlog
 - [x] MUST   get kitchen example back to work
@@ -21,7 +31,7 @@ to indicate that the output should be rendered normally, but return earlier
 - [x] MUST   be able to cache output templates
 - [x] MUST   be ergonomic to have translated templates as a response, or other (error) customizations
 - [x] MUST   fully test coding package
-- [x] MUST   find an alternative for comparing error interface values in Render: not actually needed
+- [x] MUST   find an alternative for comparing error interface values in Render: not needed, users can just retur nil
 - [ ] MUST   have a better way to debug unexpected error responses for development: add factories for verbose errors
 - [ ] MUST   re-think usecase of rest endpoint returning error
 - [ ] MUST   don't write body if response is 204 or other status without a body
