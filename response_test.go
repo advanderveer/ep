@@ -413,7 +413,7 @@ func TestResponseWriting(t *testing.T) {
 		t.Fatalf("should have written header, got: %v", rec.Header())
 	}
 
-	if res.state.wroteHeader != true {
+	if res.state.wroteHeader != 200 {
 		t.Fatalf("shoud have marked header was written, got: %v", res.state.wroteHeader)
 	}
 }
@@ -582,5 +582,26 @@ func TestStreamingInput(t *testing.T) {
 
 	if n != 3 {
 		t.Fatalf("unexpected, got: %v", n)
+	}
+}
+
+type out204 struct{}
+
+func (o out204) Head(w http.ResponseWriter, r *http.Request) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+func Test204ResponseWriting(t *testing.T) {
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding())
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/", nil)
+	req = Negotiate(*cfg, req)
+	res := NewResponse(rec, req, cfg)
+
+	res.Render(out204{}, nil)
+
+	if rec.Body.Len() != 0 {
+		t.Fatalf("unexpected, got: %v", rec.Body.Len())
 	}
 }

@@ -27,7 +27,7 @@ type Response struct {
 	responseContentType string
 
 	state struct {
-		wroteHeader bool
+		wroteHeader int
 		invalidErr  error
 		clientErr   error // BadRequest status
 		serverErr   error // InternalServerError
@@ -55,6 +55,7 @@ func NewResponse(
 		res.dec = d.Decoder(req)
 	}
 
+	res.state.wroteHeader = -1
 	return
 }
 
@@ -224,16 +225,15 @@ func (r *Response) render(out Output) (err error) {
 	}
 
 	// if there is a content type for the response, set it before header written
-	if r.responseContentType != "" && !r.state.wroteHeader {
+	if r.responseContentType != "" && r.state.wroteHeader < 0 {
 		r.Header().Set("Content-Type", r.responseContentType)
 	}
 
 	// only call the output's head if the response header was not yet written
 	hout, hok := out.(HeaderOutput)
-	if !r.state.wroteHeader && hok {
+	if r.state.wroteHeader < 0 && hok {
 		err = hout.Head(r, r.req)
 		if err == SkipEncode {
-			// @TODO test this
 			return
 		} else if err != nil {
 			r.state.serverErr = err
@@ -241,7 +241,7 @@ func (r *Response) render(out Output) (err error) {
 		}
 	}
 
-	if r.enc == nil {
+	if r.enc == nil || !bodyAllowedForStatus(r.state.wroteHeader) {
 		return
 	}
 
@@ -261,12 +261,26 @@ func (r *Response) Header() http.Header {
 
 // Write implements the http.ResponseWriter's "Write" method
 func (r *Response) Write(b []byte) (int, error) {
-	r.state.wroteHeader = true // because underlying http.ResponseWriter does so
+	r.state.wroteHeader = http.StatusOK // because underlying http.ResponseWriter does so
 	return r.wr.Write(b)
 }
 
 // WriteHeader implements the http.ResponseWriter's "WriteHeader" method
 func (r *Response) WriteHeader(statusCode int) {
-	r.state.wroteHeader = true
+	r.state.wroteHeader = statusCode
 	r.wr.WriteHeader(statusCode)
+}
+
+// bodyAllowedForStatus reports whether a given response status code
+// permits a body. See RFC 7230, section 3.3.
+func bodyAllowedForStatus(status int) bool {
+	switch {
+	case status >= 100 && status <= 199:
+		return false
+	case status == 204:
+		return false
+	case status == 304:
+		return false
+	}
+	return true
 }
