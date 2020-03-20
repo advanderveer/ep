@@ -1,10 +1,6 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
-# Logging and Easy debugging
-- optionally, provide a logger that allows printing feedback on errors
-- optionally, provide a way to provide a structured logger
-
 ## Backlog
 - [x] MUST   get kitchen example back to work
 - [x] MUST   also add HTTP language negotiation
