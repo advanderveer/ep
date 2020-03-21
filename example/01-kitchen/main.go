@@ -27,6 +27,7 @@ func main() {
 		WithLanguage("nl", "en-GB").
 		WithDecoding(epcoding.NewFormDecoding(urld)).
 		WithEncoding(epcoding.NewHTMLEncoding(view)).
+		SetLogger(ep.NewStdLogger(nil)).
 		Handler(Register{r, smgr}))
 
 	r.Path("/hello").Handler(ep.New().Handler(Hello{}))

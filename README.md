@@ -50,7 +50,8 @@ And maybe Redirects
 - [x] SHOULD remove progress keeping from reader
 - [x] SHOULD be able to return all kinds of app errors with status code from exec
 - [x] SHOULD also make it more ergonomic to just render a 204, 404, Conflict and other common exec status responses for REST endpoints
-- [ ] SHOULD make it ergonomic to just change the status code for valid responses: Redirects, 2xx
+- [x] SHOULD make it ergonomic to render output with common 2xx status codes: 201, 204
+- [x] SHOULD make it ergonomic to redirect the client
 - [ ] SHOULD add more logging methods to the logger to track
 - [ ] COULD  turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test
@@ -64,7 +65,7 @@ And maybe Redirects
 - [ ] COULD  create http request interface for easier testing
 - [x] COULD  remove reqProgress counter
 - [ ] COULD  allow input.Read to return special error that prevents decoding
-- [ ] COULD  allow output.Head to return special error that prevents encoding
+- [x] COULD  allow output.Head to return special error that prevents encoding
 - [ ] COULD  better test language negotiation
 - [ ] COULD  support response buffering for errors that occur halway writing the response
 - [ ] COULD  allow JSON encoder configuration, i.e: indentation
@@ -72,6 +73,8 @@ And maybe Redirects
 - [x] COULD  allow configuration what content-type will be written for a encoder: i.e: application/vnd.api+json
 - [ ] COULD  also handle panics in the negotiation code
 - [ ] COULD  assert status codes send to Error, Errorf to be in range of 400-600
+- [ ] COULD  support something like this: https://github.com/mozillazg/go-httpheader on output structs
+- [ ] COULD  encode response status also from output struct tags
 - [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
 - [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function

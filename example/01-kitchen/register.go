@@ -54,8 +54,9 @@ func (e Register) Exec(ctx context.Context, in *RegisterInput, verr error) (out 
 
 	if verr == nil && in.Registration != nil {
 		e.sess.Put(ctx, "message", "Success!")
-		out.Redirect, err = e.mux.Get("register").URL()
-		return
+		redir, err := e.mux.Get("register").URL()
+		out.SetRedirect(redir.String())
+		return out, err
 	}
 
 	out.Action, err = e.mux.Get("register").URL()
@@ -73,25 +74,17 @@ func (e Register) Exec(ctx context.Context, in *RegisterInput, verr error) (out 
 
 	out.Message += e.sess.PopString(ctx, "message")
 	out.Message += ep.Language(ctx)
-	return out, verr // invalid input, render as show
+	return out, nil
 }
 
 type RegisterOutput struct {
-	Message  string
-	Redirect *url.URL
-	Action   *url.URL
-	Input    *RegisterInput
+	ep.StatusRedirect
+	Message string
+	Action  *url.URL
+	Input   *RegisterInput
 }
 
 func (o RegisterOutput) Template() string { return "register" }
-func (o RegisterOutput) Head(w http.ResponseWriter, r *http.Request) (err error) {
-	if o.Redirect != nil {
-		http.Redirect(w, r, o.Redirect.String(), http.StatusMovedPermanently)
-		return
-	}
-
-	return
-}
 
 // RegisterPageTmpl defines how the output will be rendered
 var RegisterPageTmpl = `<!doctype html>

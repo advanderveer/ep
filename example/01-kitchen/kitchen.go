@@ -9,8 +9,14 @@ import (
 )
 
 type (
-	KitchenInput  struct{ Foo string }
-	KitchenOutput struct{ Bar string }
+	KitchenInput struct {
+		Foo string
+	}
+
+	KitchenOutput struct {
+		ep.StatusCreated
+		Bar string
+	}
 )
 
 func HandleKitchen(res *ep.Response, req *http.Request) {
