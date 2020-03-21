@@ -24,6 +24,7 @@ func TestConf(t *testing.T) {
 	xmld1 := epcoding.NewXMLDecoding()
 	v1 := val2{}
 	cef1 := func(error) Output { return nil }
+	aef1 := func(*AppError) Output { return nil }
 	qdec1 := qdec{}
 
 	t.Run("encoding methods", func(t *testing.T) {
@@ -116,10 +117,9 @@ func TestConf(t *testing.T) {
 			t.Fatalf("unexpected")
 		}
 
-		c1 = c1.SetInvalidErrFactory(cef1)
-		if c1.InvalidErrFactory() == nil {
+		c1 = c1.SetAppErrFactory(aef1)
+		if c1.AppErrFactory() == nil {
 			t.Fatalf("unexpected")
 		}
-
 	})
 }

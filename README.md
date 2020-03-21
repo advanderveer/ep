@@ -1,6 +1,28 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
+## Ergonomic Status Rendering for REST
+We got the outputs supported by the framework:
+- ClientError (400)
+- ServerError (500)
+- InvalidError (422) 
+
+Invalid Error could be more flexible to include other 4xx/5xx cases. The 200 are
+more challenging. They should really be part of the out struct.
+
+- Return specific error
+- Encode struct into output with status method
+
+- 201 On Create
+
+Don't want to create a whole head() method for that 
+
+- 204 No Content - On Delete
+- 404 Not Found
+- 401 Unauthorized
+
+And maybe Redirects
+
 ## Backlog
 - [x] MUST   get kitchen example back to work
 - [x] MUST   also add HTTP language negotiation
@@ -26,6 +48,9 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] SHOULD make the Config method more ergonomic to use
 - [x] SHOULD come with build-in logging support to debug client and server errors
 - [x] SHOULD remove progress keeping from reader
+- [x] SHOULD be able to return all kinds of app errors with status code from exec
+- [x] SHOULD also make it more ergonomic to just render a 204, 404, Conflict and other common exec status responses for REST endpoints
+- [ ] SHOULD make it ergonomic to just change the status code for valid responses: Redirects, 2xx
 - [ ] SHOULD add more logging methods to the logger to track
 - [ ] COULD  turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test
@@ -46,6 +71,7 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [ ] COULD  be more flexible with what content get's accepted for decoding: (i.e application/vnd.api+json should match json)
 - [x] COULD  allow configuration what content-type will be written for a encoder: i.e: application/vnd.api+json
 - [ ] COULD  also handle panics in the negotiation code
+- [ ] COULD  assert status codes send to Error, Errorf to be in range of 400-600
 - [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
 - [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function

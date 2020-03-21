@@ -1,28 +1,16 @@
 package ep
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 )
 
-// InvalidInputError can be returned to render to write a response that indicates
-// that the server understood the request but didn't accept the parameters
-type InvalidInputError struct{ e error }
-
-// InvalidInput creates a error that can be returned to indicate that the client
-// needs to check its parameters
-func InvalidInput(e error) *InvalidInputError {
-	return &InvalidInputError{e}
-}
-
-// Error implements error interface
-func (e *InvalidInputError) Error() string { return e.e.Error() }
-
-// Unwrap returns the wrapped error
-func (e *InvalidInputError) Unwrap() error { return e.e }
-
 // serverErrOutput is the output that is returned by default when the response
 // gets into the server error state.
-type serverErrOutput struct{ ErrorMessage string }
+type serverErrOutput struct {
+	ErrorMessage string `json:"ErrorMessage"`
+}
 
 func (out serverErrOutput) Template() string { return "error" }
 func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
@@ -32,7 +20,9 @@ func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 
 // clientErrOutput is the output that is returned by default when the response
 // gets into the client error state
-type clientErrOutput struct{ ErrorMessage string }
+type clientErrOutput struct {
+	ErrorMessage string `json:"ErrorMessage"`
+}
 
 func (out clientErrOutput) Template() string { return "error" }
 func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
@@ -40,12 +30,47 @@ func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// invalidErrOutput is the output that is returned by default when the response
-// gets into the client error state
-type invalidErrOutput struct{ ErrorMessage string }
+// appErrOutput is the default output that is retured when the application returns its
+// own error. It allows for rendering a specific status code.
+type appErrOutput struct {
+	code         int
+	ErrorMessage string `json:"ErrorMessage"`
+}
 
-func (out invalidErrOutput) Template() string { return "error" }
-func (out invalidErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(422)
+func (out appErrOutput) Template() string { return "error" }
+func (out appErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+	w.WriteHeader(out.code)
 	return nil
+}
+
+// AppError is an application specific error that can be returned by application
+// code to trigger the rendering of error output with a specific status code.
+type AppError struct {
+	c int
+	e error
+}
+
+// Error implements the error interface
+func (e AppError) Error() string { return e.e.Error() }
+
+// Unwrap allows this error to be unwrapped
+func (e AppError) Unwrap() error { return e.e }
+
+// Error will create an AppError with at most 1 wrapped error. If the no error
+// is provided the resulting output will show the default http status message
+// for the provided code.
+func Error(code int, err ...error) *AppError {
+	if len(err) > 1 {
+		panic("ep: only takes 0 or 1 errors")
+	} else if len(err) == 1 {
+		return &AppError{code, err[0]}
+	} else {
+		return &AppError{code, errors.New(http.StatusText(code))}
+	}
+}
+
+// Errorf will create a new AppError that wraps a new formatted error message.
+// The f string may contain %w to wrap an error.
+func Errorf(code int, f string, args ...interface{}) *AppError {
+	return &AppError{code, fmt.Errorf(f, args...)}
 }

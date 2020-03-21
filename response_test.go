@@ -388,16 +388,16 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
-	t.Run("rendering InvalidInputError", func(t *testing.T) {
+	t.Run("rendering AppError", func(t *testing.T) {
 		e := errors.New("foo")
 
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
-		res.Render(nil, InvalidInput(e))
+		res.Render(nil, Error(422, e))
 
-		if res.Error() != e {
+		if !errors.Is(res.Error(), e) {
 			t.Fatalf("unexpected, got: %v", res.Error())
 		}
 
@@ -408,7 +408,52 @@ func TestResponseRendering(t *testing.T) {
 		if rec.Body.String() != `{"ErrorMessage":"foo"}`+"\n" {
 			t.Fatalf("unexpected, got: %v", rec.Body.String())
 		}
+	})
 
+	t.Run("rendering AppError without message", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
+		res := NewResponse(rec, req, *cfg)
+		res.Render(nil, Error(409))
+
+		if rec.Code != 409 {
+			t.Fatalf("unexpected, got: %v", rec.Code)
+		}
+
+		if rec.Body.String() != `{"ErrorMessage":"`+http.StatusText(409)+`"}`+"\n" {
+			t.Fatalf("unexpected, got: %v", rec.Body.String())
+		}
+	})
+
+	lbuf = bytes.NewBuffer(nil)
+	logs = log.New(lbuf, "", 0)
+	cfg = cfg.SetLogger(NewStdLogger(logs))
+
+	t.Run("rendering AppError with custom message", func(t *testing.T) {
+		e := errors.New("app fail")
+
+		rec := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/", nil)
+		req = Negotiate(*cfg, req)
+		res := NewResponse(rec, req, *cfg)
+		res.Render(nil, Errorf(401, "failed on me: %w", e))
+
+		if !errors.Is(res.Error(), e) {
+			t.Fatalf("unexpected, got: %v", res.Error())
+		}
+
+		if rec.Code != 401 {
+			t.Fatalf("unexpected, got: %v", rec.Code)
+		}
+
+		if rec.Body.String() != `{"ErrorMessage":"failed on me: app fail"}`+"\n" {
+			t.Fatalf("unexpected, got: %v", rec.Body.String())
+		}
+
+		if !strings.Contains(lbuf.String(), "app fail") {
+			t.Fatalf("log should show error, got: %v", lbuf.String())
+		}
 	})
 }
 

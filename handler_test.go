@@ -99,7 +99,7 @@ func panic2Handle(res *Response, req *http.Request) {
 
 	// if desired we can panic an invalid input message all the way up
 	// and allow the framework to present it
-	panic(InvalidInput(errors.New("foo")))
+	panic(Error(422, errors.New("foo")))
 }
 
 func TestPanicInvalidInputHandling(t *testing.T) {

@@ -31,7 +31,7 @@ type Response struct {
 
 	state struct {
 		wroteHeader int
-		invalidErr  error
+		appErr      *AppError
 		clientErr   error // BadRequest status
 		serverErr   error // InternalServerError
 	}
@@ -75,8 +75,8 @@ func (r *Response) Error() error {
 		return r.state.serverErr
 	case r.state.clientErr != nil:
 		return r.state.clientErr
-	case r.state.invalidErr != nil:
-		return r.state.invalidErr
+	case r.state.appErr != nil:
+		return r.state.appErr
 	default:
 		return nil
 	}
@@ -169,12 +169,11 @@ func (r *Response) Validate(in Input) (verr error) {
 func (r *Response) Render(out Output, err error) {
 	if err != nil {
 
-		// if the error is marked as invalid input we will render
-		// it as an parameter error response. Mainly usefull for
-		// REST endpoints
-		var iierr *InvalidInputError
-		if errors.As(err, &iierr) {
-			r.state.invalidErr = iierr.Unwrap()
+		// Special app errors allow the application to render error outputs
+		// with a custom status code
+		var aerr *AppError
+		if errors.As(err, &aerr) {
+			r.state.appErr = aerr
 		} else {
 			r.state.serverErr = err
 		}
@@ -209,10 +208,11 @@ func (r *Response) clientErrorOutput(err error) Output {
 	return f(err)
 }
 
-func (r *Response) invalidErrorOutput(err error) Output {
-	f := r.cfg.InvalidErrFactory()
+func (r *Response) appErrorOutput(err *AppError) Output {
+	r.logs.LogAppErrRender(err)
+	f := r.cfg.AppErrFactory()
 	if f == nil {
-		return invalidErrOutput{err.Error()}
+		return appErrOutput{err.c, err.Error()}
 	}
 
 	return f(err)
@@ -228,8 +228,8 @@ func (r *Response) render(out Output) (err error) {
 		out = r.serverErrorOutput(r.state.serverErr)
 	case r.state.clientErr != nil:
 		out = r.clientErrorOutput(r.state.clientErr)
-	case r.state.invalidErr != nil:
-		out = r.invalidErrorOutput(r.state.invalidErr)
+	case r.state.appErr != nil:
+		out = r.appErrorOutput(r.state.appErr)
 	}
 
 	if out == nil {

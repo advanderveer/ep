@@ -13,6 +13,9 @@ type Logger interface {
 
 	// LogClientErrRender is called when the response will render a client error
 	LogClientErrRender(err error)
+
+	// LogAppErrRender is called when the response will be a rendered app errror
+	LogAppErrRender(err *AppError)
 }
 
 // StdLogger creates a logger using the standard library logging package
@@ -39,8 +42,13 @@ func (l StdLogger) LogClientErrRender(err error) {
 	l.logf("ep: rendering client error: %v", err)
 }
 
+func (l StdLogger) LogAppErrRender(err *AppError) {
+	l.logf("ep: rendering app error: %v", err)
+}
+
 // NopLogger is can be provided to disable logging
 type NopLogger struct{}
 
-func (l NopLogger) LogServerErrRender(err error) {}
-func (l NopLogger) LogClientErrRender(err error) {}
+func (l NopLogger) LogServerErrRender(err error)  {}
+func (l NopLogger) LogClientErrRender(err error)  {}
+func (l NopLogger) LogAppErrRender(err *AppError) {}
