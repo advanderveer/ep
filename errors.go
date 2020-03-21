@@ -14,6 +14,7 @@ type serverErrOutput struct {
 
 func (out serverErrOutput) Template() string { return "error" }
 func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusInternalServerError)
 	return nil
 }
@@ -26,6 +27,7 @@ type clientErrOutput struct {
 
 func (out clientErrOutput) Template() string { return "error" }
 func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
@@ -39,6 +41,7 @@ type appErrOutput struct {
 
 func (out appErrOutput) Template() string { return "error" }
 func (out appErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(out.code)
 	return nil
 }
