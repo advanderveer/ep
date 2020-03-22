@@ -42,6 +42,7 @@ __Features:__
 - [x] SHOULD also make it more ergonomic to just render a 204, 404, Conflict and other common exec status responses for REST endpoints
 - [x] SHOULD make it ergonomic to render output with common 2xx status codes: 201, 204
 - [x] SHOULD make it ergonomic to redirect the client
+- [x] SHOULD make AppError fields public
 - [ ] SHOULD add more logging methods to the logger to track
 - [ ] COULD  use the configuration pattern as described here: https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
 - [ ] COULD  turn most of the coding tests into table tests

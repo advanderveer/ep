@@ -49,15 +49,15 @@ func (out appErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 // AppError is an application specific error that can be returned by application
 // code to trigger the rendering of error output with a specific status code.
 type AppError struct {
-	c int
-	e error
+	Code int
+	Err  error
 }
 
 // Error implements the error interface
-func (e AppError) Error() string { return e.e.Error() }
+func (e AppError) Error() string { return e.Err.Error() }
 
 // Unwrap allows this error to be unwrapped
-func (e AppError) Unwrap() error { return e.e }
+func (e AppError) Unwrap() error { return e.Err }
 
 // Error will create an AppError with at most 1 wrapped error. If the no error
 // is provided the resulting output will show the default http status message

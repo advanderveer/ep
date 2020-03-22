@@ -212,7 +212,7 @@ func (r *Response) appErrorOutput(err *AppError) Output {
 	r.logs.LogAppErrRender(err)
 	f := r.cfg.AppErrFactory()
 	if f == nil {
-		return appErrOutput{err.c, err.Error()}
+		return appErrOutput{err.Code, err.Error()}
 	}
 
 	return f(err)
