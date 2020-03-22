@@ -7,11 +7,10 @@ flexibility that is expected in the Go ecosystem.
 __Features:__
 
 - Works with __any HTTP router__ that accepts the http.Handler interface
-- Automatically decodes the request body into _input_ based on the `Content-Type` header
 - Supports any library for __input validation__, both system-wide or customized per endpoint
-- Automatically encodes the response body through __content negotation__ with the `Accept` header
-- Uses __language negotiation__ os your code can use best supported language for translations
 - Provides customizable __error handling__ for system errors and errors specific to your application
+- Automatically encodes and decodes HTTP payloads using __content negotation__ 
+- Uses __language negotiation__ os your code can use best supported language for translations
 - Well tested, benchmarked and depends only on the standard library
 
 ## Backlog
