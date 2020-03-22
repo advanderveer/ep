@@ -1,28 +1,6 @@
 # ep
 A miniature framework to reduce code duplication in writing HTTP endpoints
 
-## Ergonomic Status Rendering for REST
-We got the outputs supported by the framework:
-- ClientError (400)
-- ServerError (500)
-- InvalidError (422) 
-
-Invalid Error could be more flexible to include other 4xx/5xx cases. The 200 are
-more challenging. They should really be part of the out struct.
-
-- Return specific error
-- Encode struct into output with status method
-
-- 201 On Create
-
-Don't want to create a whole head() method for that 
-
-- 204 No Content - On Delete
-- 404 Not Found
-- 401 Unauthorized
-
-And maybe Redirects
-
 ## Backlog
 - [x] MUST   get kitchen example back to work
 - [x] MUST   also add HTTP language negotiation
