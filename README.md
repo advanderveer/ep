@@ -1,5 +1,18 @@
 # ep
-A miniature framework to reduce code duplication in writing HTTP endpoints
+A miniature Go(lang) framework for rapid development of [http.Handlers](https://pkg.go.dev/net/http?tab=doc#Handler) 
+while reducing code duplication and increasing readability. Designed to build 
+both APIs and regular web applications more efficiently while keeping the 
+flexibility that is expected in the Go ecosystem.
+
+__Features:__
+
+- Works with __any HTTP router__ that accepts the http.Handler interface
+- Automatically decodes the request body into _input_ based on the `Content-Type` header
+- Supports any library for __input validation__, both system-wide or customized per endpoint
+- Automatically encodes the response body through __content negotation__ with the `Accept` header
+- Uses __language negotiation__ os your code can use best supported language for translations
+- Provides customizable __error handling__ for system errors and errors specific to your application
+- Well tested, benchmarked and depends only on the standard library
 
 ## Backlog
 - [x] MUST   get kitchen example back to work
@@ -31,6 +44,7 @@ A miniature framework to reduce code duplication in writing HTTP endpoints
 - [x] SHOULD make it ergonomic to render output with common 2xx status codes: 201, 204
 - [x] SHOULD make it ergonomic to redirect the client
 - [ ] SHOULD add more logging methods to the logger to track
+- [ ] COULD  use the configuration pattern as described here: https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
 - [ ] COULD  turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test
 - [ ] COULD  provide tooling to fuzz endpoint
