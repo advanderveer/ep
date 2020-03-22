@@ -1,4 +1,4 @@
-# ep
+# ep [![](https://godoc.org/github.com/advanderveer/ep?status.svg)](https://pkg.go.dev/github.com/advanderveer/ep?tab=doc)
 A miniature Go(lang) framework for rapid development of [http.Handlers](https://pkg.go.dev/net/http?tab=doc#Handler) 
 while reducing code duplication and increasing readability. Designed to build 
 both APIs and regular web applications more efficiently while keeping the 
@@ -11,7 +11,7 @@ __Features:__
 - Provides customizable __error handling__ for system errors and errors specific to your application
 - Automatically encodes and decodes HTTP payloads using __content negotation__ 
 - Uses __language negotiation__ os your code can use best supported language for translations
-- Well tested, benchmarked and depends only on the standard library
+- __Well tested__, benchmarked and depends only on the standard library
 
 ## Backlog
 - [x] MUST   get kitchen example back to work
