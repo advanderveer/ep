@@ -523,7 +523,7 @@ func TestHTMLEncoding(t *testing.T) {
 	view.New("vt1").Parse(`hello {{.FooBar}}`)
 	view.New("error").Parse(`hello error: {{.ErrorMessage}}`)
 
-	cfg := New().WithEncoding(epcoding.NewHTMLEncoding(view))
+	cfg := New().WithEncoding(epcoding.NewTemplateEncoding(view))
 
 	t.Run("render error output with error template", func(t *testing.T) {
 		rec := httptest.NewRecorder()

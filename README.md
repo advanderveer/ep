@@ -34,6 +34,7 @@ __Features:__
 - [x] MUST   handle panics in the handle, with the server error message rendering, should also be easy to debug
 - [x] MUST   re-think usecase of rest endpoint returning error
 - [x] MUST   don't write body if response is 204 or other status without a body
+- [x] MUST   allow html template to accept any kind of template (interface), rename to template encoding
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [x] SHOULD come with build-in logging support to debug client and server errors
@@ -66,7 +67,7 @@ __Features:__
 - [ ] COULD  also handle panics in the negotiation code
 - [ ] COULD  assert status codes send to Error, Errorf to be in range of 400-600
 - [ ] COULD  support something like this: https://github.com/mozillazg/go-httpheader on output structs
-- [ ] COULD  encode response status also from output struct tags
+- [ ] COULD  encode response status also from output struct tags: maybe use AWS SDK approach of tagging with 'location:"header/uri/body"'
 - [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
 - [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function

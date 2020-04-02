@@ -10,12 +10,12 @@ type tmplInput struct{ Name string }
 
 func (in tmplInput) Template() string { return "t1" }
 
-func TestHTMLEncoding(t *testing.T) {
+func TestTemplateEncoding(t *testing.T) {
 	type input struct{ Name string }
 
 	v := template.Must(template.New("").Parse(`Hello {{.Name}}`))
 	template.Must(v.New("t1").Parse(`Bye, {{.Name}}`))
-	e := NewHTMLEncoding(v)
+	e := NewTemplateEncoding(v)
 
 	e = e.SetProduces("text/t1")
 	if e.Produces() != "text/t1" {
