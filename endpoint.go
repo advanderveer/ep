@@ -10,7 +10,7 @@ type Input interface{}
 // CheckerInput can be implemented by Inputs to allow them to validate themselves
 type CheckerInput interface {
 	Input
-	Check() (err error)
+	Validate() (err error)
 }
 
 // ReaderInput is an input that may optionally be implemented by inputs to

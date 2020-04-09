@@ -19,7 +19,7 @@ var errIn1 = errors.New("bar")
 
 type in1 struct{ Foo string }
 
-func (in in1) Check() (err error) {
+func (in in1) Validate() (err error) {
 	if in.Foo != "" {
 		return nil
 	}
@@ -177,7 +177,7 @@ func TestResponseBinding(t *testing.T) {
 
 type in2 struct{ Foo string }
 
-func (in in2) Check() error { return nil }
+func (in in2) Validate() error { return nil }
 func (in *in2) Read(r *http.Request) error {
 	in.Foo = "barr"
 	if r.URL.Path == "/bogus" {
@@ -671,4 +671,29 @@ func Test204ResponseWriting(t *testing.T) {
 	if rec.Body.Len() != 0 {
 		t.Fatalf("unexpected, got: %v", rec.Body.Len())
 	}
+}
+
+type outCreatedPanic struct{ StatusCreated }
+
+func TestCreateEmbedPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding())
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/", nil)
+	req = Negotiate(*cfg, req)
+	res := NewResponse(rec, req, cfg)
+
+	var out *outCreatedPanic
+
+	res.Render(out, nil)
+
+	if rec.Code != 201 {
+		t.Fatalf("unexpected, got: %v", rec.Code)
+	}
+
 }

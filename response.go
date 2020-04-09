@@ -156,8 +156,8 @@ func (r *Response) Validate(in Input) (verr error) {
 	}
 
 	// inputs may optionally implement a validation method
-	if incheck, ok := in.(CheckerInput); ok {
-		verr = incheck.Check()
+	if inval, ok := in.(CheckerInput); ok {
+		verr = inval.Validate()
 	}
 
 	return
@@ -244,13 +244,28 @@ func (r *Response) render(out Output) (err error) {
 	// only call the output's head if the response header was not yet written
 	hout, hok := out.(HeaderOutput)
 	if r.state.wroteHeader < 0 && hok {
-		err = hout.Head(r, r.req)
+
+		// The user might have passed in a nil value while still satisfying
+		// the interface. That will cause a panic that and we don't want to
+		// use reflection to prevent that. Instead, recover from it and
+		// panic again with a clear message.
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					panic("ep: panicked while calling output head, make sure that the output is not nil.")
+				}
+			}()
+
+			err = hout.Head(r, r.req)
+		}()
+
 		if err == SkipEncode {
 			return
 		} else if err != nil {
 			r.state.serverErr = err
 			return
 		}
+
 	}
 
 	if r.enc == nil || !bodyAllowedForStatus(r.state.wroteHeader) {
