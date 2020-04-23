@@ -673,6 +673,23 @@ func Test204ResponseWriting(t *testing.T) {
 	}
 }
 
+type outCreatedSkipEncode struct{ StatusCreated }
+
+func TestCreatedSkipEncoding(t *testing.T) {
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding())
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/", nil)
+	req = Negotiate(*cfg, req)
+	res := NewResponse(rec, req, cfg)
+
+	res.Render(outCreatedSkipEncode{}, SkipEncode)
+
+	println(rec.Body.String())
+	if rec.Body.Len() != 0 {
+		t.Fatalf("unexpected, got: %v", rec.Body.Len())
+	}
+}
+
 type outCreatedPanic struct{ StatusCreated }
 
 func TestCreateEmbedPanic(t *testing.T) {
@@ -695,5 +712,4 @@ func TestCreateEmbedPanic(t *testing.T) {
 	if rec.Code != 201 {
 		t.Fatalf("unexpected, got: %v", rec.Code)
 	}
-
 }

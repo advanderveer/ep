@@ -46,7 +46,9 @@ __Features:__
 - [x] SHOULD make AppError fields public
 - [x] SHOULD rename "Check" on input to "Validate", way more obvious and less suprising
 - [ ] SHOULD add more logging methods to the logger to track
-- [ ] COULD not get nil pointer if status created is embedded on a nil output struct. Instead, embedding should trigger behaviour differently
+- [x] SHOULD SkipEncode should also work when returned directly to the render
+- [ ] SHOULD in general, make it easier to return some response with just a status code and a simple body (no encoding)
+- [ ] COULD  not get nil pointer if status created is embedded on a nil output struct. Instead, embedding should trigger behaviour differently
 - [ ] COULD  use the configuration pattern as described here: https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
 - [ ] COULD  turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test

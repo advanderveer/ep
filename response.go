@@ -232,10 +232,6 @@ func (r *Response) render(out Output) (err error) {
 		out = r.appErrorOutput(r.state.appErr)
 	}
 
-	if out == nil {
-		return // nothing to do
-	}
-
 	// if there is a content type for the response, set it before header written
 	if r.responseContentType != "" && r.state.wroteHeader < 0 {
 		r.Header().Set("Content-Type", r.responseContentType)
@@ -248,7 +244,7 @@ func (r *Response) render(out Output) (err error) {
 		// The user might have passed in a nil value while still satisfying
 		// the interface. That will cause a panic that and we don't want to
 		// use reflection to prevent that. Instead, recover from it and
-		// panic again with a clear message.
+		// panic again with a clearer message.
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -265,10 +261,13 @@ func (r *Response) render(out Output) (err error) {
 			r.state.serverErr = err
 			return
 		}
-
 	}
 
-	if r.enc == nil || !bodyAllowedForStatus(r.state.wroteHeader) {
+	// skip encoding if: there is no encoding configured, http standard define
+	// there to be no content or the user returned SkipEncode explicitely
+	if r.enc == nil ||
+		!bodyAllowedForStatus(r.state.wroteHeader) ||
+		r.state.serverErr == SkipEncode {
 		return
 	}
 
