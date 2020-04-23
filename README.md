@@ -35,6 +35,7 @@ __Features:__
 - [x] MUST   re-think usecase of rest endpoint returning error
 - [x] MUST   don't write body if response is 204 or other status without a body
 - [x] MUST   allow html template to accept any kind of template (interface), rename to template encoding
+- [x] MUST   not server 500 status code if skipEncode is provided as an error to render
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [x] SHOULD come with build-in logging support to debug client and server errors

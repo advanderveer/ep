@@ -684,7 +684,9 @@ func TestCreatedSkipEncoding(t *testing.T) {
 
 	res.Render(outCreatedSkipEncode{}, SkipEncode)
 
-	println(rec.Body.String())
+	if rec.Code != 201 {
+		t.Fatalf("unexpected, got: %v", rec.Code)
+	}
 	if rec.Body.Len() != 0 {
 		t.Fatalf("unexpected, got: %v", rec.Body.Len())
 	}

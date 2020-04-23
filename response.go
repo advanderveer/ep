@@ -224,7 +224,7 @@ func (r *Response) render(out Output) (err error) {
 	// if there are any client or server errors they will be turned into
 	// outputs.
 	switch {
-	case r.state.serverErr != nil:
+	case r.state.serverErr != nil && r.state.serverErr != SkipEncode:
 		out = r.serverErrorOutput(r.state.serverErr)
 	case r.state.clientErr != nil:
 		out = r.clientErrorOutput(r.state.clientErr)
