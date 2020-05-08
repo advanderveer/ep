@@ -12,7 +12,7 @@ type serverErrOutput struct {
 	ErrorMessage string `json:"ErrorMessage"`
 }
 
-func (out serverErrOutput) Template() string { return "error" }
+func (out serverErrOutput) Template() string { return "error.html" }
 func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusInternalServerError)
@@ -25,7 +25,7 @@ type clientErrOutput struct {
 	ErrorMessage string `json:"ErrorMessage"`
 }
 
-func (out clientErrOutput) Template() string { return "error" }
+func (out clientErrOutput) Template() string { return "error.html" }
 func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusBadRequest)
@@ -39,7 +39,7 @@ type appErrOutput struct {
 	ErrorMessage string `json:"ErrorMessage"`
 }
 
-func (out appErrOutput) Template() string { return "error" }
+func (out appErrOutput) Template() string { return "error.html" }
 func (out appErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(out.code)

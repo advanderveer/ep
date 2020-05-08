@@ -36,6 +36,9 @@ __Features:__
 - [x] MUST   don't write body if response is 204 or other status without a body
 - [x] MUST   allow html template to accept any kind of template (interface), rename to template encoding
 - [x] MUST   not server 500 status code if skipEncode is provided as an error to render
+- [x] MUST   set default error template to "error.html" it is corresponds to an actual file in the most common case
+- [ ] MUST   have package level doc summary for coding package
+- [ ] SHOULD have a clearer error when here is no html template defined for "error"
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [x] SHOULD come with build-in logging support to debug client and server errors

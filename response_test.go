@@ -521,7 +521,7 @@ func (o out4) Head(w http.ResponseWriter, r *http.Request) (err error) { return 
 func TestHTMLEncoding(t *testing.T) {
 	view := template.New("root")
 	view.New("vt1").Parse(`hello {{.FooBar}}`)
-	view.New("error").Parse(`hello error: {{.ErrorMessage}}`)
+	view.New("error.html").Parse(`hello error: {{.ErrorMessage}}`)
 
 	cfg := New().WithEncoding(epcoding.NewTemplateEncoding(view))
 
