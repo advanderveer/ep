@@ -1,6 +1,7 @@
 package ep
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -177,6 +178,12 @@ func (r *Response) Render(out Output, err error) {
 		} else {
 			r.state.serverErr = err
 		}
+	}
+
+	// if the output is contextual, inject the request context. NOTE: this only
+	// works if the output is a pointer
+	if sctx, ok := out.(interface{ SetContext(ctx context.Context) }); ok {
+		sctx.SetContext(r.req.Context())
 	}
 
 	err = r.render(out) // first pass

@@ -715,3 +715,26 @@ func TestCreateEmbedPanic(t *testing.T) {
 		t.Fatalf("unexpected, got: %v", rec.Code)
 	}
 }
+
+type outWithContext struct{ ContextOutput }
+
+func TestOutputWithContextSet(t *testing.T) {
+	view := template.Must(template.New("root").Parse(`hello {{ .Ctx }}`))
+
+	cfg := New().WithEncoding(epcoding.NewTemplateEncoding(view))
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+	req = Negotiate(*cfg, req)
+	res := NewResponse(rec, req, cfg)
+
+	out := &outWithContext{}
+	res.Render(out, nil)
+
+	if rec.Code != 200 {
+		t.Fatalf("unexpected, got: %v", rec.Code)
+	}
+
+	if !strings.Contains(rec.Body.String(), `context.Background`) {
+		t.Fatalf("should print context, got: %v", rec.Body.String())
+	}
+}

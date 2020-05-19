@@ -6,6 +6,18 @@ import (
 	"github.com/advanderveer/ep/coding"
 )
 
+// ContextOutput can be embedded in an output type to cause the request context
+// to be injected
+type ContextOutput struct{ ctx context.Context }
+
+// SetContext is called to inject the request context
+func (out *ContextOutput) SetContext(ctx context.Context) {
+	out.ctx = ctx
+}
+
+// Ctx returns the injected context
+func (out ContextOutput) Ctx() context.Context { return out.ctx }
+
 // epContextKey reservers a specific type for our context keys
 type epContextkey string
 

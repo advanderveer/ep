@@ -37,8 +37,11 @@ __Features:__
 - [x] MUST   allow html template to accept any kind of template (interface), rename to template encoding
 - [x] MUST   not server 500 status code if skipEncode is provided as an error to render
 - [x] MUST   set default error template to "error.html" it is corresponds to an actual file in the most common case
-- [ ] MUST   have package level doc summary for coding package
+- [ ] SHOULD when both query decoder and body decoder is configured, should be easier to protect against CSRF posts with all query params
 - [ ] SHOULD have a clearer error when here is no html template defined for "error"
+- [ ] SHOULD add more logging methods to the logger to track
+- [ ] SHOULD in general, make it easier to return some response with just a status code and a simple body (no encoding)
+- [x] SHOULD allow outputs to embed a type that will be populated with the request context
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
 - [x] SHOULD come with build-in logging support to debug client and server errors
@@ -49,9 +52,9 @@ __Features:__
 - [x] SHOULD make it ergonomic to redirect the client
 - [x] SHOULD make AppError fields public
 - [x] SHOULD rename "Check" on input to "Validate", way more obvious and less suprising
-- [ ] SHOULD add more logging methods to the logger to track
 - [x] SHOULD SkipEncode should also work when returned directly to the render
-- [ ] SHOULD in general, make it easier to return some response with just a status code and a simple body (no encoding)
+- [ ] COULD  check for the user that the output in a pointer value if setContext would be called
+- [ ] COULD   have package level doc summary for coding package
 - [ ] COULD  not get nil pointer if status created is embedded on a nil output struct. Instead, embedding should trigger behaviour differently
 - [ ] COULD  use the configuration pattern as described here: https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
 - [ ] COULD  turn most of the coding tests into table tests

@@ -1,3 +1,4 @@
+// Package epcoding provides encoding and decoding types
 package epcoding
 
 import (
