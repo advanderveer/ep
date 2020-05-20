@@ -750,12 +750,14 @@ func TestCreateEmbedPanic(t *testing.T) {
 	}
 }
 
-type outWithContext struct{ ContextOutput }
+type outWithContext struct{ Contextual }
 
 func TestOutputWithContextSet(t *testing.T) {
 	view := template.Must(template.New("root").Parse(`hello {{ .Ctx }}`))
+	cfg := New().
+		WithEncoding(epcoding.NewTemplateEncoding(view)).
+		WithHooks(ContextHook)
 
-	cfg := New().WithEncoding(epcoding.NewTemplateEncoding(view))
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	req = Negotiate(*cfg, req)

@@ -1,7 +1,6 @@
 package ep
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -27,7 +26,6 @@ type Response struct {
 	enc  epcoding.Encoder
 	logs Logger
 
-	// @TODO clean this up
 	responseContentType string
 
 	state struct {
@@ -178,12 +176,6 @@ func (r *Response) Render(out Output, err error) {
 		} else {
 			r.state.serverErr = err
 		}
-	}
-
-	// if the output is contextual, inject the request context. NOTE: this only
-	// works if the output is a pointer
-	if sctx, ok := out.(interface{ SetContext(ctx context.Context) }); ok {
-		sctx.SetContext(r.req.Context())
 	}
 
 	err = r.render(out) // first pass

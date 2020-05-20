@@ -2,21 +2,31 @@ package ep
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/advanderveer/ep/coding"
 )
 
-// ContextOutput can be embedded in an output type to cause the request context
+// ContextHook will contextual outputs to be provided with a context
+func ContextHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	if sctx, ok := out.(interface{ SetContext(ctx context.Context) }); ok {
+		sctx.SetContext(r.Context())
+	}
+
+	return nil
+}
+
+// Contextual can be embedded in an output type to cause the request context
 // to be injected
-type ContextOutput struct{ ctx context.Context }
+type Contextual struct{ ctx context.Context }
 
 // SetContext is called to inject the request context
-func (out *ContextOutput) SetContext(ctx context.Context) {
+func (out *Contextual) SetContext(ctx context.Context) {
 	out.ctx = ctx
 }
 
 // Ctx returns the injected context
-func (out ContextOutput) Ctx() context.Context { return out.ctx }
+func (out Contextual) Ctx() context.Context { return out.ctx }
 
 // epContextKey reservers a specific type for our context keys
 type epContextkey string
