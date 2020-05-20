@@ -81,6 +81,7 @@ func TestPanicHandling(t *testing.T) {
 	req.Header.Set("Accept", "application/json")
 
 	New().
+		WithHooks(HeadHook).
 		WithLanguage("nl", "en-US").
 		WithEncoding(epcoding.NewXMLEncoding(), epcoding.NewJSONEncoding()).
 		WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding()).
@@ -108,6 +109,7 @@ func TestPanicInvalidInputHandling(t *testing.T) {
 	req.Header.Set("Accept", "application/json")
 
 	New().
+		WithHooks(HeadHook).
 		WithLanguage("nl", "en-US").
 		WithEncoding(epcoding.NewXMLEncoding(), epcoding.NewJSONEncoding()).
 		WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding()).

@@ -244,29 +244,19 @@ func (r *Response) render(out Output) (err error) {
 		r.Header().Set("Content-Type", r.responseContentType)
 	}
 
-	// only call the output's head if the response header was not yet written
-	hout, hok := out.(HeaderOutput)
-	if r.state.wroteHeader < 0 && hok {
-
-		// The user might have passed in a nil value while still satisfying
-		// the interface. That will cause a panic that and we don't want to
-		// use reflection to prevent that. Instead, recover from it and
-		// panic again with a clearer message.
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					panic("ep: panicked while calling output head, make sure that the output is not nil.")
-				}
-			}()
-
-			err = hout.Head(r, r.req)
-		}()
-
-		if err == SkipEncode {
-			return
-		} else if err != nil {
-			r.state.serverErr = err
-			return
+	// it is possible to configure hooks that will be run if the header has not
+	// been written yet. This allows for composable behavior on output structs
+	// or based on context values
+	if r.state.wroteHeader < 0 {
+		for _, h := range r.cfg.Hooks() {
+			err = h(out, r, r.req)
+			if err == SkipEncode {
+				r.enc = nil // prevent encoding
+				continue
+			} else if err != nil {
+				r.state.serverErr = err
+				return
+			}
 		}
 	}
 

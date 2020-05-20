@@ -18,6 +18,7 @@ type Conf struct {
 	val   Validator
 	qdec  epcoding.URLValuesDecoder
 	logs  Logger
+	hooks []Hook
 
 	serverErrFactory func(err error) Output
 	clientErrFactory func(err error) Output
@@ -30,6 +31,7 @@ func New() *Conf { return &Conf{} }
 // Copy will duplicate the configuration
 func (c Conf) Copy() (cc *Conf) {
 	cc = &Conf{
+		hooks: make([]Hook, len(c.hooks)),
 		langs: make([]string, len(c.langs)),
 		encs:  make([]epcoding.Encoding, len(c.encs)),
 		decs:  make([]epcoding.Decoding, len(c.decs)),
@@ -42,6 +44,7 @@ func (c Conf) Copy() (cc *Conf) {
 		appErrFactory:    c.appErrFactory,
 	}
 
+	copy(cc.hooks, c.hooks)
 	copy(cc.langs, c.langs)
 	copy(cc.encs, c.encs)
 	copy(cc.decs, c.decs)
@@ -121,7 +124,12 @@ func (c Conf) HandlerFunc(epf EndpointFunc) *Handler {
 	return c.Handler(epf)
 }
 
+// Hooks returns any configured hooks
+func (c *Conf) WithHooks(hooks ...Hook) *Conf { c.hooks = append(c.hooks, hooks...); return c }
+func (c Conf) Hooks() []Hook                  { return c.hooks }
+
 type ConfReader interface {
+	Hooks() []Hook
 	Encodings() []epcoding.Encoding
 	Decodings() []epcoding.Decoding
 	Languages() []string

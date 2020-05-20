@@ -41,6 +41,7 @@ __Features:__
 - [ ] SHOULD have a clearer error when here is no html template defined for "error"
 - [ ] SHOULD add more logging methods to the logger to track
 - [ ] SHOULD in general, make it easier to return some response with just a status code and a simple body (no encoding)
+- [ ] SHOULD also call head hooks when not using render (but just resp.Write())
 - [x] SHOULD allow outputs to embed a type that will be populated with the request context
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
@@ -53,9 +54,13 @@ __Features:__
 - [x] SHOULD make AppError fields public
 - [x] SHOULD rename "Check" on input to "Validate", way more obvious and less suprising
 - [x] SHOULD SkipEncode should also work when returned directly to the render
+- [x] COULD  include a more composable ways for behaviour to be added to an output: what if it redirects and sets a cookie
+- [x] COULD  allow middleware to install a hook that is called just before the first byte is written to the response body 
+             for middleware that needs to write a header
 - [ ] COULD  check for the user that the output in a pointer value if setContext would be called
-- [ ] COULD   have package level doc summary for coding package
-- [ ] COULD  not get nil pointer if status created is embedded on a nil output struct. Instead, embedding should trigger behaviour differently
+- [x] COULD  have package level doc summary for coding package
+- [ ] COULD  not get nil pointer if status created is embedded on a nil output struct. Instead, embedding 
+			 should trigger behaviour differently
 - [ ] COULD  use the configuration pattern as described here: https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
 - [ ] COULD  turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test
@@ -82,3 +87,17 @@ __Features:__
 - [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
 - [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function
+
+
+## Brainstorm: better output behaviour composition
+We would like to allow the user to decorate the output with behaviour
+
+- Render as redirect (possibly preventing further body encoding)
+- Write a header based on what middleware does
+- Set the context for contextual rendering
+- Allow per output behaviour
+- Allow based on context values
+
+Allow configuration of HeaderHooks hooks that are called by render if the 
+header can still be changed.
+
