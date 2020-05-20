@@ -6,16 +6,36 @@ import (
 	"net/http"
 )
 
+// ServerErrHook will cause server error outputs to be rendered appropriately
+func ServerErrHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	_, ok := out.(interface{ ServerError() string })
+	if !ok {
+		return nil
+	}
+
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusInternalServerError)
+	return nil
+}
+
 // serverErrOutput is the output that is returned by default when the response
 // gets into the server error state.
 type serverErrOutput struct {
 	ErrorMessage string `json:"ErrorMessage"`
 }
 
-func (out serverErrOutput) Template() string { return "error.html" }
-func (out serverErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+func (out serverErrOutput) ServerError() string { return out.ErrorMessage }
+func (out serverErrOutput) Template() string    { return "error.html" }
+
+// ClientErrHook will cause server error outputs to be rendered appropriately
+func ClientErrHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	_, ok := out.(interface{ ClientError() string })
+	if !ok {
+		return nil
+	}
+
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -25,10 +45,19 @@ type clientErrOutput struct {
 	ErrorMessage string `json:"ErrorMessage"`
 }
 
-func (out clientErrOutput) Template() string { return "error.html" }
-func (out clientErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
+func (out clientErrOutput) ClientError() string { return out.ErrorMessage }
+func (out clientErrOutput) Template() string    { return "error.html" }
+
+// AppErrHook will cause app error outputs to be rendered appropriately
+func AppErrHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	aerr, ok := out.(interface{ AppError() (string, int) })
+	if !ok {
+		return nil
+	}
+
+	_, code := aerr.AppError()
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(http.StatusBadRequest)
+	w.WriteHeader(code)
 	return nil
 }
 
@@ -39,12 +68,8 @@ type appErrOutput struct {
 	ErrorMessage string `json:"ErrorMessage"`
 }
 
-func (out appErrOutput) Template() string { return "error.html" }
-func (out appErrOutput) Head(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(out.code)
-	return nil
-}
+func (out appErrOutput) AppError() (string, int) { return out.ErrorMessage, out.code }
+func (out appErrOutput) Template() string        { return "error.html" }
 
 // AppError is an application specific error that can be returned by application
 // code to trigger the rendering of error output with a specific status code.

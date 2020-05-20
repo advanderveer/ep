@@ -54,7 +54,9 @@ func TestResponseBinding(t *testing.T) {
 		}
 	})
 
-	cfg = New().WithDecoding(epcoding.NewJSONDecoding()).WithHooks(HeadHook)
+	cfg = New().
+		WithDecoding(epcoding.NewJSONDecoding()).
+		WithHooks(ClientErrHook)
 
 	t.Run("bind with input and decoder", func(t *testing.T) {
 		var v in1
@@ -97,7 +99,10 @@ func TestResponseBinding(t *testing.T) {
 		}
 	})
 
-	cfg = New().WithDecoding(epcoding.NewJSONDecoding()).WithEncoding(epcoding.NewJSONEncoding()).WithHooks(HeadHook)
+	cfg = New().
+		WithDecoding(epcoding.NewJSONDecoding()).
+		WithEncoding(epcoding.NewJSONEncoding()).
+		WithHooks(ClientErrHook)
 
 	t.Run("bind with syntax error, and JSON encoder to render", func(t *testing.T) {
 		var v in1
@@ -209,7 +214,7 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 
 	lbuf := bytes.NewBuffer(nil)
 	logs := log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHooks(HeadHook)
+	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHooks(ClientErrHook)
 
 	t.Run("with read error", func(t *testing.T) {
 		var in in2
@@ -326,7 +331,7 @@ func TestResponseRendering(t *testing.T) {
 
 	lbuf := bytes.NewBuffer(nil)
 	logs := log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHooks(HeadHook)
+	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHooks(ServerErrHook)
 
 	t.Run("rendering an non-validation error", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -375,7 +380,9 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
-	cfg = New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(HeadHook)
+	cfg = New().
+		WithEncoding(epcoding.NewJSONEncoding()).
+		WithHooks(ServerErrHook, AppErrHook)
 
 	t.Run("rendering output that cannot be encoded", func(t *testing.T) {
 		rec := httptest.NewRecorder()

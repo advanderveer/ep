@@ -37,6 +37,7 @@ __Features:__
 - [x] MUST   allow html template to accept any kind of template (interface), rename to template encoding
 - [x] MUST   not server 500 status code if skipEncode is provided as an error to render
 - [x] MUST   set default error template to "error.html" it is corresponds to an actual file in the most common case
+- [x] SHOULD implement error hooks for handling error outputs
 - [ ] SHOULD when both query decoder and body decoder is configured, should be easier to protect against CSRF posts with all query params
 - [ ] SHOULD have a clearer error when here is no html template defined for "error"
 - [ ] SHOULD add more logging methods to the logger to track
@@ -87,17 +88,4 @@ __Features:__
 - [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
 - [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function
-
-
-## Brainstorm: better output behaviour composition
-We would like to allow the user to decorate the output with behaviour
-
-- Render as redirect (possibly preventing further body encoding)
-- Write a header based on what middleware does
-- Set the context for contextual rendering
-- Allow per output behaviour
-- Allow based on context values
-
-Allow configuration of HeaderHooks hooks that are called by render if the 
-header can still be changed.
 
