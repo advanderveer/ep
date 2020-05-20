@@ -38,6 +38,8 @@ __Features:__
 - [x] MUST   not server 500 status code if skipEncode is provided as an error to render
 - [x] MUST   set default error template to "error.html" it is corresponds to an actual file in the most common case
 - [x] SHOULD implement error hooks for handling error outputs
+- [x] SHOULD implement hooks for common status responses
+- [ ] SHOULD implement contextual output as a hook
 - [ ] SHOULD when both query decoder and body decoder is configured, should be easier to protect against CSRF posts with all query params
 - [ ] SHOULD have a clearer error when here is no html template defined for "error"
 - [ ] SHOULD add more logging methods to the logger to track

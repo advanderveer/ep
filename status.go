@@ -4,18 +4,39 @@ import (
 	"net/http"
 )
 
-// StatusCreated can be embedded to automatically set the setatus code to 201
+// StatusCreatedHook allow outputs to be rendered as created responses
+func StatusCreatedHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	outt, ok := out.(interface{ statusCreated() string })
+	if !ok {
+		return nil
+	}
+
+	loc := outt.statusCreated()
+	if loc != "" {
+		w.Header().Set("Location", loc)
+	}
+
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusCreated)
+	return nil
+}
+
+// StatusCreated can be embedded to automatically set the status code to 201
 // when it is rendered as output. If SetLocation is called the Location header
 // will also be set.
 type StatusCreated struct{ location string }
 
+func (s StatusCreated) statusCreated() string { return s.location }
 func (s *StatusCreated) SetLocation(l string) { s.location = l }
-func (s StatusCreated) Head(w http.ResponseWriter, r *http.Request) error {
-	if s.location != "" {
-		w.Header().Set("Location", s.location)
+
+// StatusNoContentHook allow outputs to be rendered as created responses
+func StatusNoContentHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	_, ok := out.(interface{ statusNoContent() })
+	if !ok {
+		return nil
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 
@@ -23,8 +44,20 @@ func (s StatusCreated) Head(w http.ResponseWriter, r *http.Request) error {
 // code to 204 and prevent any body from being returned.
 type StatusNoContent struct{}
 
-func (s StatusNoContent) Head(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(http.StatusNoContent)
+func (s StatusNoContent) statusNoContent() {}
+
+// StatusRedirectHook allow redirect outputs to be rendered correctly easily
+func StatusRedirectHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	outt, ok := out.(interface{ statusRedirect() (string, int) })
+	if !ok {
+		return nil
+	}
+
+	loc, code := outt.statusRedirect()
+	if loc != "" && code > 0 {
+		http.Redirect(w, r, loc, code)
+	}
+
 	return nil
 }
 
@@ -33,6 +66,10 @@ func (s StatusNoContent) Head(w http.ResponseWriter, r *http.Request) error {
 type StatusRedirect struct {
 	location string
 	code     int
+}
+
+func (s StatusRedirect) statusRedirect() (string, int) {
+	return s.location, s.code
 }
 
 // SetRedirect will cause the response to be a redirect. By default it will
@@ -48,13 +85,4 @@ func (s *StatusRedirect) SetRedirect(l string, code ...int) {
 	}
 
 	s.location = l
-}
-
-func (s StatusRedirect) Head(w http.ResponseWriter, r *http.Request) (err error) {
-	if s.location != "" && s.code > 0 {
-		http.Redirect(w, r, s.location, s.code)
-		return
-	}
-
-	return
 }

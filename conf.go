@@ -1,8 +1,13 @@
 package ep
 
 import (
+	"net/http"
+
 	"github.com/advanderveer/ep/coding"
 )
+
+// Hook gets triggered before the first byte is written to the response
+type Hook func(out Output, w http.ResponseWriter, r *http.Request) error
 
 // Validator may be implemented and configured to allow automatic validation
 // of all endpoint inputs.

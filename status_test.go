@@ -6,16 +6,12 @@ import (
 	"testing"
 )
 
-var _ HeaderOutput = StatusCreated{}
-var _ HeaderOutput = StatusNoContent{}
-var _ HeaderOutput = StatusRedirect{}
-
 func TestStatusCreated(t *testing.T) {
 	s := StatusCreated{}
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 
-	err := s.Head(rec, req)
+	err := StatusCreatedHook(s, rec, req)
 	if err != nil {
 		t.Fatalf("unexpected, got: %v", err)
 	}
@@ -35,7 +31,7 @@ func TestStatusCreated(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
 
-		err := s.Head(rec, req)
+		err := StatusCreatedHook(s, rec, req)
 		if err != nil {
 			t.Fatalf("unexpected, got: %v", err)
 		}
@@ -51,7 +47,7 @@ func TestStatusNoContent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 
-	err := s.Head(rec, req)
+	err := StatusNoContentHook(s, rec, req)
 	if err != nil {
 		t.Fatalf("unexpected, got: %v", err)
 	}
@@ -66,7 +62,7 @@ func TestStatusRedirect(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 
-	err := s.Head(rec, req)
+	err := StatusRedirectHook(s, rec, req)
 	if err != nil {
 		t.Fatalf("unexpected, got: %v", err)
 	}
@@ -84,7 +80,7 @@ func TestStatusRedirect(t *testing.T) {
 
 		rec = httptest.NewRecorder()
 		req, _ = http.NewRequest("GET", "/", nil)
-		err := s.Head(rec, req)
+		err := StatusRedirectHook(s, rec, req)
 		if err != nil {
 			t.Fatalf("unexpected, got: %v", err)
 		}
@@ -103,7 +99,7 @@ func TestStatusRedirect(t *testing.T) {
 
 		rec = httptest.NewRecorder()
 		req, _ = http.NewRequest("GET", "/", nil)
-		err := s.Head(rec, req)
+		err := StatusRedirectHook(s, rec, req)
 		if err != nil {
 			t.Fatalf("unexpected, got: %v", err)
 		}

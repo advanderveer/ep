@@ -42,7 +42,7 @@ func (d qdec2) Decode(v interface{}, vals url.Values) error {
 }
 
 func TestResponseBinding(t *testing.T) {
-	cfg := New().WithHooks(HeadHook)
+	cfg := New()
 
 	t.Run("bind without any input", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
@@ -125,7 +125,7 @@ func TestResponseBinding(t *testing.T) {
 		}
 	})
 
-	cfg = cfg.SetQueryDecoder(qdec1{}).WithHooks(HeadHook)
+	cfg = cfg.SetQueryDecoder(qdec1{})
 
 	t.Run("bind with valid query decoder", func(t *testing.T) {
 		var v in1
@@ -161,7 +161,7 @@ func TestResponseBinding(t *testing.T) {
 		}
 	})
 
-	cfg = cfg.SetQueryDecoder(qdec2{}).WithHooks(HeadHook)
+	cfg = cfg.SetQueryDecoder(qdec2{})
 
 	t.Run("bind with valid invalid query and error decoder", func(t *testing.T) {
 		var v in1
@@ -315,7 +315,7 @@ func (o out2) Head(w http.ResponseWriter, r *http.Request) (err error) {
 }
 
 func TestResponseRendering(t *testing.T) {
-	cfg := New().WithHooks(HeadHook)
+	cfg := New()
 
 	t.Run("render without any output or error", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -363,22 +363,22 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
-	t.Run("rendering output with failing Head()", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/", nil)
-		req = Negotiate(*cfg, req)
-		res := NewResponse(rec, req, *cfg)
+	// t.Run("rendering output with failing Head()", func(t *testing.T) {
+	// 	rec := httptest.NewRecorder()
+	// 	req, _ := http.NewRequest("GET", "/", nil)
+	// 	req = Negotiate(*cfg, req)
+	// 	res := NewResponse(rec, req, *cfg)
 
-		res.Render(out1{}, nil)
+	// 	res.Render(out1{}, nil)
 
-		if rec.Code != http.StatusInternalServerError {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
+	// 	if rec.Code != http.StatusInternalServerError {
+	// 		t.Fatalf("unexpected, got: %v", rec.Code)
+	// 	}
 
-		if res.Error() != out1Err {
-			t.Fatalf("should have registered as error")
-		}
-	})
+	// 	if res.Error() != out1Err {
+	// 		t.Fatalf("should have registered as error")
+	// 	}
+	// })
 
 	cfg = New().
 		WithEncoding(epcoding.NewJSONEncoding()).
@@ -436,7 +436,7 @@ func TestResponseRendering(t *testing.T) {
 
 	lbuf = bytes.NewBuffer(nil)
 	logs = log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHooks(HeadHook)
+	cfg = cfg.SetLogger(NewStdLogger(logs))
 
 	t.Run("rendering AppError with custom message", func(t *testing.T) {
 		e := errors.New("app fail")
@@ -558,13 +558,27 @@ func TestHTMLEncoding(t *testing.T) {
 
 type out5 struct{ Bar string }
 
-func (o *out5) Head(w http.ResponseWriter, r *http.Request) (err error) {
+func (o *out5) myBehaviour(w http.ResponseWriter, r *http.Request) (err error) {
 	w.WriteHeader(204)
 	return SkipEncode
 }
 
+func myBehaviourHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	hout, ok := out.(interface {
+		myBehaviour(http.ResponseWriter, *http.Request) error
+	})
+	if ok {
+		return hout.myBehaviour(w, r)
+	}
+
+	return nil
+}
+
 func TestResponseWithSkipEncode(t *testing.T) {
-	cfg := New().WithDecoding(epcoding.NewJSONDecoding()).WithEncoding(epcoding.NewJSONEncoding()).WithHooks(HeadHook)
+	cfg := New().
+		WithDecoding(epcoding.NewJSONDecoding()).
+		WithEncoding(epcoding.NewJSONEncoding()).
+		WithHooks(myBehaviourHook)
 
 	var in in1
 
@@ -662,19 +676,31 @@ func TestStreamingInput(t *testing.T) {
 
 type out204 struct{}
 
-func (o out204) Head(w http.ResponseWriter, r *http.Request) error {
+func (o *out204) myBehaviour2(w http.ResponseWriter, r *http.Request) (err error) {
 	w.WriteHeader(204)
 	return nil
 }
 
+func myBehaviourHook2(out Output, w http.ResponseWriter, r *http.Request) error {
+	hout, ok := out.(interface {
+		myBehaviour2(w http.ResponseWriter, r *http.Request) (err error)
+	})
+
+	if ok {
+		return hout.myBehaviour2(w, r)
+	}
+
+	return nil
+}
+
 func Test204ResponseWriting(t *testing.T) {
-	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(HeadHook)
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(myBehaviourHook2)
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
 	req = Negotiate(*cfg, req)
 	res := NewResponse(rec, req, cfg)
 
-	res.Render(out204{}, nil)
+	res.Render(&out204{}, nil)
 
 	if rec.Body.Len() != 0 {
 		t.Fatalf("unexpected, got: %v", rec.Body.Len())
@@ -684,7 +710,7 @@ func Test204ResponseWriting(t *testing.T) {
 type outCreatedSkipEncode struct{ StatusCreated }
 
 func TestCreatedSkipEncoding(t *testing.T) {
-	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(HeadHook)
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(StatusCreatedHook)
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
 	req = Negotiate(*cfg, req)
@@ -709,7 +735,7 @@ func TestCreateEmbedPanic(t *testing.T) {
 		}
 	}()
 
-	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(HeadHook)
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(StatusCreatedHook)
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
 	req = Negotiate(*cfg, req)
