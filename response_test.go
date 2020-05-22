@@ -56,7 +56,7 @@ func TestResponseBinding(t *testing.T) {
 
 	cfg = New().
 		WithDecoding(epcoding.NewJSONDecoding()).
-		WithHooks(ClientErrHook)
+		WithHook(ClientErrHook)
 
 	t.Run("bind with input and decoder", func(t *testing.T) {
 		var v in1
@@ -102,7 +102,7 @@ func TestResponseBinding(t *testing.T) {
 	cfg = New().
 		WithDecoding(epcoding.NewJSONDecoding()).
 		WithEncoding(epcoding.NewJSONEncoding()).
-		WithHooks(ClientErrHook)
+		WithHook(ClientErrHook)
 
 	t.Run("bind with syntax error, and JSON encoder to render", func(t *testing.T) {
 		var v in1
@@ -214,7 +214,7 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 
 	lbuf := bytes.NewBuffer(nil)
 	logs := log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHooks(ClientErrHook)
+	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHook(ClientErrHook)
 
 	t.Run("with read error", func(t *testing.T) {
 		var in in2
@@ -331,7 +331,7 @@ func TestResponseRendering(t *testing.T) {
 
 	lbuf := bytes.NewBuffer(nil)
 	logs := log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHooks(ServerErrHook)
+	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHook(ServerErrHook)
 
 	t.Run("rendering an non-validation error", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -382,7 +382,7 @@ func TestResponseRendering(t *testing.T) {
 
 	cfg = New().
 		WithEncoding(epcoding.NewJSONEncoding()).
-		WithHooks(ServerErrHook, AppErrHook)
+		WithHook(ServerErrHook, AppErrHook)
 
 	t.Run("rendering output that cannot be encoded", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -578,7 +578,7 @@ func TestResponseWithSkipEncode(t *testing.T) {
 	cfg := New().
 		WithDecoding(epcoding.NewJSONDecoding()).
 		WithEncoding(epcoding.NewJSONEncoding()).
-		WithHooks(myBehaviourHook)
+		WithHook(myBehaviourHook)
 
 	var in in1
 
@@ -694,7 +694,7 @@ func myBehaviourHook2(out Output, w http.ResponseWriter, r *http.Request) error 
 }
 
 func Test204ResponseWriting(t *testing.T) {
-	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(myBehaviourHook2)
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHook(myBehaviourHook2)
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
 	req = Negotiate(*cfg, req)
@@ -710,7 +710,7 @@ func Test204ResponseWriting(t *testing.T) {
 type outCreatedSkipEncode struct{ StatusCreated }
 
 func TestCreatedSkipEncoding(t *testing.T) {
-	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(StatusCreatedHook)
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHook(StatusCreatedHook)
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
 	req = Negotiate(*cfg, req)
@@ -735,7 +735,7 @@ func TestCreateEmbedPanic(t *testing.T) {
 		}
 	}()
 
-	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHooks(StatusCreatedHook)
+	cfg := New().WithEncoding(epcoding.NewJSONEncoding()).WithHook(StatusCreatedHook)
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", nil)
 	req = Negotiate(*cfg, req)
@@ -756,7 +756,7 @@ func TestOutputWithContextSet(t *testing.T) {
 	view := template.Must(template.New("root").Parse(`hello {{ .Ctx }}`))
 	cfg := New().
 		WithEncoding(epcoding.NewTemplateEncoding(view)).
-		WithHooks(ContextHook)
+		WithHook(ContextHook)
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)

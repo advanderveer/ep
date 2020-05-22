@@ -66,7 +66,7 @@ func NewResponse(
 	return
 }
 
-// Error will return any server, client or validation error that was
+// Error will return any server, client or app error that was
 // encountered while formulating the response.
 func (r *Response) Error() error {
 	switch {
@@ -129,7 +129,7 @@ func (r *Response) Bind(in Input) (ok bool) {
 	// with a decoder and input we ask the decoder to deserialize
 	err := r.dec.Decode(in)
 	if err == io.EOF {
-		return false // just be done, no error
+		return false // just be done, no more data
 	} else if err != nil {
 		r.state.clientErr = err // includes io.EOF
 		r.render(nil)

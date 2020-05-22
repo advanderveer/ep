@@ -12,6 +12,35 @@ __Features:__
 - Automatically encodes and decodes HTTP payloads using __content negotation__ 
 - Uses __language negotiation__ os your code can use best supported language for translations
 - __Well tested__, benchmarked and depends only on the standard library
+- Supports __streaming__ requests and responses
+
+## Making error handling less unwieldy
+- Don't need a logger to see them
+- Don't need to create custom output
+- Don't need to setup a custom template with a specific name
+
+The general premise is ok, the response will store any errors that it encounters
+during the response lifecycle and renders an output of it instead of the actual
+output. But having the different error types is confusing.
+
+- Maybe just one config that turns errors into outputs. Also handle panics?
+- Suitable for errors that are always handler wide: unexpected server errors and
+  client errors.
+- AppErrors are confusing, just for custom status code? Basically an utility to 
+  render an error output with a certain status code and message.
+- Question is, may the error returned from exec methods be used for rendering
+  "expected" errors, like 404 or 412? If so, an handler basically has two outputs
+  the "appError" output and the output type. That is confusing, it's probably
+  better if the main Output type would have a "error" embedded type and an 
+  "valid" embedded type, with optional rendering of it. The status would be
+  a function of that with hooks.
+- Question: what will be the default behaviour of the error handler func. Like
+  net/html it might just log to stderr by default. But what json/html would it
+  render?
+- What happens if the output doesn't have a template method? maybe configure the
+  template encoding with a default template so it doesn't crash with weird 
+  errors?
+- Or maybe just skip encoding by default?
 
 ## Backlog
 - [x] MUST   get kitchen example back to work
@@ -40,7 +69,9 @@ __Features:__
 - [x] SHOULD implement error hooks for handling error outputs
 - [x] SHOULD implement hooks for common status responses
 - [x] SHOULD implement contextual output as a hook
-- [ ] SHOULD when both query decoder and body decoder is configured, should be easier to protect against CSRF posts with all query params
+- [ ] SHOULD make handling errors less unwieldy, need to add a logger to see them, need to create custom outputs, needs to setup html template with correct name
+- [x] SHOULD when both query decoder and body decoder is configured, should be easier to protect against CSRF posts with all query params
+- [ ] SHOULD make it clear in docs or with an error that the order of hooks is important, if one calls "writeHeader" the others won't be able to change the header
 - [ ] SHOULD have a clearer error when here is no html template defined for "error"
 - [ ] SHOULD add more logging methods to the logger to track
 - [ ] SHOULD in general, make it easier to render some response with just a status code and a simple body (no encoding)
@@ -61,6 +92,7 @@ __Features:__
 - [x] COULD  allow middleware to install a hook that is called just before the first byte is written to the response body 
              for middleware that needs to write a header
 - [ ] COULD  check for the user that the output in a pointer value if setContext would be called
+- [x] COULD  make withEncoding and withHooks consistent in naming (one with s, other without)
 - [x] COULD  have package level doc summary for coding package
 - [ ] COULD  not get nil pointer if status created is embedded on a nil output struct. Instead, embedding 
 			 should trigger behaviour differently

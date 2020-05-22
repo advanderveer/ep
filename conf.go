@@ -130,8 +130,8 @@ func (c Conf) HandlerFunc(epf EndpointFunc) *Handler {
 }
 
 // Hooks returns any configured hooks
-func (c *Conf) WithHooks(hooks ...Hook) *Conf { c.hooks = append(c.hooks, hooks...); return c }
-func (c Conf) Hooks() []Hook                  { return c.hooks }
+func (c *Conf) WithHook(hooks ...Hook) *Conf { c.hooks = append(c.hooks, hooks...); return c }
+func (c Conf) Hooks() []Hook                 { return c.hooks }
 
 type ConfReader interface {
 	Hooks() []Hook
