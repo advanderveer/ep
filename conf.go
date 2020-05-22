@@ -22,12 +22,8 @@ type Conf struct {
 	decs  []epcoding.Decoding
 	val   Validator
 	qdec  epcoding.URLValuesDecoder
-	logs  Logger
 	hooks []Hook
-
-	serverErrFactory func(err error) Output
-	clientErrFactory func(err error) Output
-	appErrFactory    func(err *AppError) Output
+	errh  func(isClient bool, err error) Output
 }
 
 // New inits an empty configuration
@@ -42,11 +38,7 @@ func (c Conf) Copy() (cc *Conf) {
 		decs:  make([]epcoding.Decoding, len(c.decs)),
 		val:   c.val,
 		qdec:  c.qdec,
-		logs:  c.logs,
-
-		serverErrFactory: c.serverErrFactory,
-		clientErrFactory: c.clientErrFactory,
-		appErrFactory:    c.appErrFactory,
+		errh:  c.errh,
 	}
 
 	copy(cc.hooks, c.hooks)
@@ -81,43 +73,12 @@ func (c *Conf) WithLanguage(langs ...string) *Conf { c.langs = append(c.langs, l
 func (c Conf) Validator() Validator            { return c.val }
 func (c *Conf) SetValidator(v Validator) *Conf { c.val = v; return c }
 
-// Logger returns the configured logger
-func (c Conf) Logger() Logger            { return c.logs }
-func (c *Conf) SetLogger(l Logger) *Conf { c.logs = l; return c }
-
 // QueryDecoder configures the query to be decoded into the input struct
 func (c Conf) QueryDecoder() epcoding.URLValuesDecoder { return c.qdec }
 func (c *Conf) SetQueryDecoder(d epcoding.URLValuesDecoder) *Conf {
 	c.qdec = d
 	return c
 }
-
-// SetAppErrFactory configures how invalid input errors are created
-func (r *Conf) SetAppErrFactory(f func(err *AppError) Output) *Conf {
-	r.appErrFactory = f
-	return r
-}
-
-// AppErrFactory returns the current invalid input error factory
-func (r Conf) AppErrFactory() func(err *AppError) Output { return r.appErrFactory }
-
-// SetClientErrFactory configures how client error outputs are created
-func (r *Conf) SetClientErrFactory(f func(err error) Output) *Conf {
-	r.clientErrFactory = f
-	return r
-}
-
-// ClientErrFactory returns the current client error factory
-func (r Conf) ClientErrFactory() func(err error) Output { return r.clientErrFactory }
-
-// SetServerErrFactory configures a factory for the creation of server error outputs
-func (r *Conf) SetServerErrFactory(f func(err error) Output) *Conf {
-	r.serverErrFactory = f
-	return r
-}
-
-// ServerErrFactory returns the configured factory for server errors
-func (r Conf) ServerErrFactory() func(err error) Output { return r.serverErrFactory }
 
 // Handler will copy the configuration and make the endpoint as a handler
 func (c Conf) Handler(ep Endpoint) *Handler {
@@ -133,15 +94,18 @@ func (c Conf) HandlerFunc(epf EndpointFunc) *Handler {
 func (c *Conf) WithHook(hooks ...Hook) *Conf { c.hooks = append(c.hooks, hooks...); return c }
 func (c Conf) Hooks() []Hook                 { return c.hooks }
 
+// OnErrorRender determines how the response rendering handles error
+func (c *Conf) SetOnErrorRender(h func(isClient bool, err error) Output) *Conf { c.errh = h; return c }
+func (c Conf) OnErrorRender() func(isClient bool, err error) Output {
+	return c.errh
+}
+
 type ConfReader interface {
 	Hooks() []Hook
 	Encodings() []epcoding.Encoding
 	Decodings() []epcoding.Decoding
 	Languages() []string
 	Validator() Validator
-	Logger() Logger
 	QueryDecoder() epcoding.URLValuesDecoder
-	ServerErrFactory() func(err error) Output
-	ClientErrFactory() func(err error) Output
-	AppErrFactory() func(err *AppError) Output
+	OnErrorRender() func(isClient bool, err error) Output
 }

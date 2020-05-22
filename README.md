@@ -69,13 +69,17 @@ output. But having the different error types is confusing.
 - [x] SHOULD implement error hooks for handling error outputs
 - [x] SHOULD implement hooks for common status responses
 - [x] SHOULD implement contextual output as a hook
-- [ ] SHOULD make handling errors less unwieldy, need to add a logger to see them, need to create custom outputs, needs to setup html template with correct name
+- [x] SHOULD make handling errors less unwieldy, need to add a logger to see them, need to create custom outputs, 
+             needs to setup html template with correct name
 - [x] SHOULD when both query decoder and body decoder is configured, should be easier to protect against CSRF posts with all query params
-- [ ] SHOULD make it clear in docs or with an error that the order of hooks is important, if one calls "writeHeader" the others won't be able to change the header
+- [ ] SHOULD make it clear in docs or with an error that the order of hooks is important, if one calls "writeHeader" the 
+             others won't be able to change the header
 - [ ] SHOULD have a clearer error when here is no html template defined for "error"
-- [ ] SHOULD add more logging methods to the logger to track
 - [ ] SHOULD in general, make it easier to render some response with just a status code and a simple body (no encoding)
 - [ ] SHOULD also call head hooks when not using render (but just resp.Write())
+- [ ] SHOULD have a default OnErrorRender that logs it to stderr
+- [ ] SHOULD use a single error value in the response instead of client and server, but instead: use an error type that 
+             describes it as client or server and should change the OnErrorRender signature to allow customization of that
 - [x] SHOULD allow outputs to embed a type that will be populated with the request context
 - [x] SHOULD allow configuring defaults for endpoint config
 - [x] SHOULD make the Config method more ergonomic to use
@@ -121,5 +125,5 @@ output. But having the different error types is confusing.
 - [ ] COULD  encode response status also from output struct tags: maybe use AWS SDK approach of tagging with 'location:"header/uri/body"'
 - [x] WONT   do content-encoding negotiation, complex: https://github.com/nytimes/gziphandler, deserves dedicated package
 - [x] WONT   add a H/HF method for endpoints that are just the handle/exec func
-- [x] WONT  return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function
-
+- [x] WONT   return an error from handle as well, since that might be a common usecase. We want to motivate to move into exec function
+- [x] WONT   add more logging methods to the logger to track, logging was not really used at all

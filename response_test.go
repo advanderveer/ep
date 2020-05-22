@@ -1,12 +1,9 @@
 package ep
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"html/template"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -56,7 +53,9 @@ func TestResponseBinding(t *testing.T) {
 
 	cfg = New().
 		WithDecoding(epcoding.NewJSONDecoding()).
-		WithHook(ClientErrHook)
+		SetOnErrorRender(func(isClient bool, e error) Output {
+			return struct{ Message string }{"invalid input"}
+		})
 
 	t.Run("bind with input and decoder", func(t *testing.T) {
 		var v in1
@@ -93,16 +92,14 @@ func TestResponseBinding(t *testing.T) {
 		if !strings.Contains(res.Error().Error(), "invalid") {
 			t.Fatalf("unexpected, got %v", res.Error())
 		}
-
-		if rec.Code != http.StatusBadRequest {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
 	})
 
 	cfg = New().
 		WithDecoding(epcoding.NewJSONDecoding()).
 		WithEncoding(epcoding.NewJSONEncoding()).
-		WithHook(ClientErrHook)
+		SetOnErrorRender(func(isClient bool, e error) Output {
+			return struct{ Message string }{"invalid input"}
+		})
 
 	t.Run("bind with syntax error, and JSON encoder to render", func(t *testing.T) {
 		var v in1
@@ -116,16 +113,19 @@ func TestResponseBinding(t *testing.T) {
 			t.Fatalf("unexpected, got: %v", ok)
 		}
 
-		if rec.Body.String() != `{"ErrorMessage":"Bad Request"}`+"\n" {
+		if rec.Body.String() != `{"Message":"invalid input"}`+"\n" {
 			t.Fatalf("expected client error encoded, got: %v", rec.Body.String())
-		}
-
-		if rec.Code != http.StatusBadRequest {
-			t.Fatalf("expected bad request status, got: %v", rec.Code)
 		}
 	})
 
-	cfg = cfg.SetQueryDecoder(qdec1{})
+	cfg = cfg.SetQueryDecoder(qdec1{}).
+		SetOnErrorRender(func(isClient bool, e error) Output {
+			if !isClient {
+				t.Fatal("should be client error")
+			}
+
+			return struct{ Message string }{"invalid query"}
+		})
 
 	t.Run("bind with valid query decoder", func(t *testing.T) {
 		var v in1
@@ -156,8 +156,8 @@ func TestResponseBinding(t *testing.T) {
 			t.Fatalf("unexpected, got: %v", ok)
 		}
 
-		if rec.Code != http.StatusBadRequest {
-			t.Fatalf("expected bad request status, got: %v", rec.Code)
+		if rec.Body.String() != `{"Message":"invalid query"}`+"\n" {
+			t.Fatalf("unexpected, got: %v", rec.Body.String())
 		}
 	})
 
@@ -175,8 +175,8 @@ func TestResponseBinding(t *testing.T) {
 			t.Fatalf("unexpected, got: %v", ok)
 		}
 
-		if rec.Code != http.StatusBadRequest {
-			t.Fatalf("expected bad request status, got: %v", rec.Code)
+		if rec.Body.String() != `{"Message":"invalid query"}`+"\n" {
+			t.Fatalf("unexpected, got: %v", rec.Body.String())
 		}
 	})
 }
@@ -212,10 +212,6 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 		}
 	})
 
-	lbuf := bytes.NewBuffer(nil)
-	logs := log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHook(ClientErrHook)
-
 	t.Run("with read error", func(t *testing.T) {
 		var in in2
 
@@ -228,12 +224,8 @@ func TestResponseBindingWithReaderInput(t *testing.T) {
 			t.Fatalf("unexpected, got: %v", ok)
 		}
 
-		if rec.Code != http.StatusBadRequest {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
-
-		if !strings.Contains(lbuf.String(), "fail") {
-			t.Fatalf("log should show error, got: %v", lbuf.String())
+		if res.Error().Error() != "fail" {
+			t.Fatalf("unexpected, got: %v", res.Error())
 		}
 	})
 }
@@ -329,26 +321,6 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
-	lbuf := bytes.NewBuffer(nil)
-	logs := log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs)).WithHook(ServerErrHook)
-
-	t.Run("rendering an non-validation error", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/", nil)
-		req = Negotiate(*cfg, req)
-		res := NewResponse(rec, req, *cfg)
-		res.Render(nil, errors.New("foo"))
-
-		if rec.Code != http.StatusInternalServerError {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
-
-		if !strings.Contains(lbuf.String(), "foo") {
-			t.Fatalf("log should show error, got: %v", lbuf.String())
-		}
-	})
-
 	t.Run("rendering an non-validation error", func(t *testing.T) {
 		var v in1
 		rec := httptest.NewRecorder()
@@ -363,104 +335,17 @@ func TestResponseRendering(t *testing.T) {
 		}
 	})
 
-	// t.Run("rendering output with failing Head()", func(t *testing.T) {
-	// 	rec := httptest.NewRecorder()
-	// 	req, _ := http.NewRequest("GET", "/", nil)
-	// 	req = Negotiate(*cfg, req)
-	// 	res := NewResponse(rec, req, *cfg)
-
-	// 	res.Render(out1{}, nil)
-
-	// 	if rec.Code != http.StatusInternalServerError {
-	// 		t.Fatalf("unexpected, got: %v", rec.Code)
-	// 	}
-
-	// 	if res.Error() != out1Err {
-	// 		t.Fatalf("should have registered as error")
-	// 	}
-	// })
-
-	cfg = New().
-		WithEncoding(epcoding.NewJSONEncoding()).
-		WithHook(ServerErrHook, AppErrHook)
-
-	t.Run("rendering output that cannot be encoded", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/", nil)
-		req = Negotiate(*cfg, req)
-		res := NewResponse(rec, req, *cfg)
-		res.Render(out2{}, nil)
-
-		if rec.Code != http.StatusInternalServerError {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
-	})
-
-	t.Run("rendering AppError", func(t *testing.T) {
-		e := errors.New("foo")
+	t.Run("render with an error", func(t *testing.T) {
+		e := errors.New("error")
 
 		rec := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/", nil)
+		req := httptest.NewRequest("GET", "/", strings.NewReader(`{}`))
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
-		res.Render(nil, Error(422, e))
+		res.Render(nil, e)
 
-		if !errors.Is(res.Error(), e) {
+		if res.Error().Error() != "error" {
 			t.Fatalf("unexpected, got: %v", res.Error())
-		}
-
-		if rec.Code != 422 {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
-
-		if rec.Body.String() != `{"ErrorMessage":"foo"}`+"\n" {
-			t.Fatalf("unexpected, got: %v", rec.Body.String())
-		}
-	})
-
-	t.Run("rendering AppError without message", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/", nil)
-		req = Negotiate(*cfg, req)
-		res := NewResponse(rec, req, *cfg)
-		res.Render(nil, Error(409))
-
-		if rec.Code != 409 {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
-
-		if rec.Body.String() != `{"ErrorMessage":"`+http.StatusText(409)+`"}`+"\n" {
-			t.Fatalf("unexpected, got: %v", rec.Body.String())
-		}
-	})
-
-	lbuf = bytes.NewBuffer(nil)
-	logs = log.New(lbuf, "", 0)
-	cfg = cfg.SetLogger(NewStdLogger(logs))
-
-	t.Run("rendering AppError with custom message", func(t *testing.T) {
-		e := errors.New("app fail")
-
-		rec := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/", nil)
-		req = Negotiate(*cfg, req)
-		res := NewResponse(rec, req, *cfg)
-		res.Render(nil, Errorf(401, "failed on me: %w", e))
-
-		if !errors.Is(res.Error(), e) {
-			t.Fatalf("unexpected, got: %v", res.Error())
-		}
-
-		if rec.Code != 401 {
-			t.Fatalf("unexpected, got: %v", rec.Code)
-		}
-
-		if rec.Body.String() != `{"ErrorMessage":"failed on me: app fail"}`+"\n" {
-			t.Fatalf("unexpected, got: %v", rec.Body.String())
-		}
-
-		if !strings.Contains(lbuf.String(), "app fail") {
-			t.Fatalf("log should show error, got: %v", lbuf.String())
 		}
 	})
 }
@@ -533,18 +418,31 @@ func TestHTMLEncoding(t *testing.T) {
 
 	cfg := New().WithEncoding(epcoding.NewTemplateEncoding(view))
 
-	t.Run("render error output with error template", func(t *testing.T) {
+	t.Run("render no error output with normal template", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
 		req = Negotiate(*cfg, req)
 		res := NewResponse(rec, req, *cfg)
-		res.Render(out4{"world"}, errors.New("fail"))
-		if rec.Body.String() != "hello error: Internal Server Error" {
+		res.Render(out4{"world"}, nil)
+		if rec.Body.String() != "hello world" {
 			t.Fatalf("unexpected, got: %v", rec.Body.String())
 		}
 	})
+}
 
-	t.Run("render no error output with normal template", func(t *testing.T) {
+func TestHTMLEncodingWithoutView(t *testing.T) {
+	view := template.New("root")
+	view.New("vt1")
+
+	cfg := New().WithEncoding(epcoding.NewTemplateEncoding(view))
+
+	t.Run("should fail without recovery", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+
 		rec := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/", nil)
 		req = Negotiate(*cfg, req)
@@ -600,6 +498,33 @@ func TestResponseWithSkipEncode(t *testing.T) {
 
 	if rec.Body.String() != `` {
 		t.Fatalf("unexpected, got: %v", rec.Body.String())
+	}
+}
+
+func myErrorHook(out Output, w http.ResponseWriter, r *http.Request) error {
+	if _, ok := out.(*out5); ok {
+		return errors.New("hook fail")
+	}
+
+	return nil
+}
+
+func TestResponseHookError(t *testing.T) {
+	cfg := New().
+		WithHook(myErrorHook)
+
+	var in in1
+
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", strings.NewReader(`{"Foo": "bar"}`))
+	req = Negotiate(*cfg, req)
+	res := NewResponse(rec, req, *cfg)
+	if res.Bind(&in) {
+		res.Render(&out5{strings.ToUpper(in.Foo)}, res.Validate(in))
+	}
+
+	if res.Error().Error() != "hook fail" {
+		t.Fatalf("unexpected, got: %v", res.Error())
 	}
 }
 
@@ -773,10 +698,4 @@ func TestOutputWithContextSet(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), `context.Background`) {
 		t.Fatalf("should print context, got: %v", rec.Body.String())
 	}
-}
-
-type myBehaviour struct{}
-
-func (b myBehaviour) SetContext(ctx context.Context) {
-
 }

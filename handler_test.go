@@ -1,7 +1,6 @@
 package ep
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -75,51 +74,24 @@ func panicHandle(res *Response, req *http.Request) {
 	panic("bar")
 }
 
-func TestPanicHandling(t *testing.T) {
+func TestPanicHandlingWithCustomOnError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"Foo": "rab"}`))
 	req.Header.Set("Accept", "application/json")
 
 	New().
-		WithHook(ServerErrHook).
 		WithLanguage("nl", "en-US").
 		WithEncoding(epcoding.NewXMLEncoding(), epcoding.NewJSONEncoding()).
 		WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding()).
-		HandlerFunc(panicHandle).ServeHTTP(rec, req)
+		SetOnErrorRender(func(isClient bool, err error) Output {
+			if isClient {
+				t.Fatal("should be server error")
+			}
 
-	if rec.Code != 500 {
-		t.Fatalf("unexpected, got: %v", rec.Code)
-	}
+			return struct{ Message string }{"my panic"}
+		}).HandlerFunc(panicHandle).ServeHTTP(rec, req)
 
-	if rec.Body.String() != `{"ErrorMessage":"Internal Server Error"}`+"\n" {
-		t.Fatalf("unexpected, got: %v", rec.Body.String())
-	}
-}
-
-func panic2Handle(res *Response, req *http.Request) {
-
-	// if desired we can panic an invalid input message all the way up
-	// and allow the framework to present it
-	panic(Error(422, errors.New("foo")))
-}
-
-func TestPanicInvalidInputHandling(t *testing.T) {
-	rec := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"Foo": "rab"}`))
-	req.Header.Set("Accept", "application/json")
-
-	New().
-		WithHook(AppErrHook).
-		WithLanguage("nl", "en-US").
-		WithEncoding(epcoding.NewXMLEncoding(), epcoding.NewJSONEncoding()).
-		WithDecoding(epcoding.NewXMLDecoding(), epcoding.NewJSONDecoding()).
-		HandlerFunc(panic2Handle).ServeHTTP(rec, req)
-
-	if rec.Code != 422 {
-		t.Fatalf("unexpected, got: %v", rec.Code)
-	}
-
-	if rec.Body.String() != `{"ErrorMessage":"foo"}`+"\n" {
+	if rec.Body.String() != `{"Message":"my panic"}`+"\n" {
 		t.Fatalf("unexpected, got: %v", rec.Body.String())
 	}
 }

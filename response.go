@@ -19,18 +19,16 @@ var (
 // Response is an http.ResponseWriter implementation that comes with
 // a host of untility method for common tasks in http handling.
 type Response struct {
-	wr   http.ResponseWriter
-	req  *http.Request
-	cfg  ConfReader
-	dec  epcoding.Decoder
-	enc  epcoding.Encoder
-	logs Logger
+	wr  http.ResponseWriter
+	req *http.Request
+	cfg ConfReader
+	dec epcoding.Decoder
+	enc epcoding.Encoder
 
 	responseContentType string
 
 	state struct {
 		wroteHeader int
-		appErr      *AppError
 		clientErr   error // BadRequest status
 		serverErr   error // InternalServerError
 	}
@@ -58,11 +56,6 @@ func NewResponse(
 	}
 
 	res.state.wroteHeader = -1
-	res.logs = cfg.Logger()
-	if res.logs == nil {
-		res.logs = NopLogger{}
-	}
-
 	return
 }
 
@@ -74,8 +67,6 @@ func (r *Response) Error() error {
 		return r.state.serverErr
 	case r.state.clientErr != nil:
 		return r.state.clientErr
-	case r.state.appErr != nil:
-		return r.state.appErr
 	default:
 		return nil
 	}
@@ -167,15 +158,7 @@ func (r *Response) Validate(in Input) (verr error) {
 // as returned by Validate() it will be handled as a server error.
 func (r *Response) Render(out Output, err error) {
 	if err != nil {
-
-		// Special app errors allow the application to render error outputs
-		// with a custom status code
-		var aerr *AppError
-		if errors.As(err, &aerr) {
-			r.state.appErr = aerr
-		} else {
-			r.state.serverErr = err
-		}
+		r.state.serverErr = err
 	}
 
 	err = r.render(out) // first pass
@@ -187,48 +170,18 @@ func (r *Response) Render(out Output, err error) {
 	}
 }
 
-func (r *Response) serverErrorOutput(err error) Output {
-	r.logs.LogServerErrRender(err)
-	f := r.cfg.ServerErrFactory()
-	if f == nil {
-		return serverErrOutput{http.StatusText(http.StatusInternalServerError)}
-	}
-
-	return f(err)
-}
-
-func (r *Response) clientErrorOutput(err error) Output {
-	r.logs.LogClientErrRender(err)
-	f := r.cfg.ClientErrFactory()
-	if f == nil {
-		return clientErrOutput{http.StatusText(http.StatusBadRequest)}
-	}
-
-	return f(err)
-}
-
-func (r *Response) appErrorOutput(err *AppError) Output {
-	r.logs.LogAppErrRender(err)
-	f := r.cfg.AppErrFactory()
-	if f == nil {
-		return appErrOutput{err.Code, err.Error()}
-	}
-
-	return f(err)
-}
-
 // render solely based on the internal state of the response.
 func (r *Response) render(out Output) (err error) {
 
-	// if there are any client or server errors they will be turned into
-	// outputs.
-	switch {
-	case r.state.serverErr != nil && r.state.serverErr != SkipEncode:
-		out = r.serverErrorOutput(r.state.serverErr)
-	case r.state.clientErr != nil:
-		out = r.clientErrorOutput(r.state.clientErr)
-	case r.state.appErr != nil:
-		out = r.appErrorOutput(r.state.appErr)
+	// we turn server errors and client errors into an output using the
+	// configured error handler
+	if errh := r.cfg.OnErrorRender(); errh != nil {
+		switch {
+		case r.state.serverErr != nil && r.state.serverErr != SkipEncode:
+			out = errh(false, r.state.serverErr)
+		case r.state.clientErr != nil:
+			out = errh(true, r.state.clientErr)
+		}
 	}
 
 	// if there is a content type for the response, set it before header written

@@ -24,13 +24,6 @@ type ReaderInput interface {
 // send as the response back to the client.
 type Output interface{}
 
-// HeaderOutput can be optionally implementedd by outputs to customize the
-// response headers
-type HeaderOutput interface {
-	Output
-	Head(http.ResponseWriter, *http.Request) error
-}
-
 // Endpoint can be implemented to descibe an HTTP endpoint
 type Endpoint interface {
 	Handle(*Response, *http.Request)

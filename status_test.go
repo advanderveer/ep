@@ -112,4 +112,14 @@ func TestStatusRedirect(t *testing.T) {
 			t.Fatalf("unexpected, got: %v", rec.Header())
 		}
 	})
+
+	t.Run("should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+
+		s.SetRedirect("/a", 307, 301)
+	})
 }

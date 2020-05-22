@@ -23,8 +23,8 @@ func TestConf(t *testing.T) {
 	xmle1 := epcoding.NewXMLEncoding()
 	xmld1 := epcoding.NewXMLDecoding()
 	v1 := val2{}
-	cef1 := func(error) Output { return nil }
-	aef1 := func(*AppError) Output { return nil }
+	// cef1 := func(error) Output { return nil }
+	// aef1 := func(*AppError) Output { return nil }
 	qdec1 := qdec{}
 
 	t.Run("encoding methods", func(t *testing.T) {
@@ -103,23 +103,6 @@ func TestConf(t *testing.T) {
 
 		if c1.QueryDecoder() != qdec1 {
 			t.Fatalf("unexpected, got: %v", c1.QueryDecoder())
-		}
-	})
-
-	t.Run("error factories", func(t *testing.T) {
-		c1 := (New()).SetClientErrFactory(cef1)
-		if c1.ClientErrFactory() == nil {
-			t.Fatalf("unexpected")
-		}
-
-		c1 = c1.SetServerErrFactory(cef1)
-		if c1.ServerErrFactory() == nil {
-			t.Fatalf("unexpected")
-		}
-
-		c1 = c1.SetAppErrFactory(aef1)
-		if c1.AppErrFactory() == nil {
-			t.Fatalf("unexpected")
 		}
 	})
 }
