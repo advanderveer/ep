@@ -23,7 +23,7 @@ type Conf struct {
 	val   Validator
 	qdec  epcoding.URLValuesDecoder
 	hooks []Hook
-	errh  func(isClient bool, err error) Output
+	errh  OnErrorFunc
 }
 
 // New inits an empty configuration
@@ -94,9 +94,12 @@ func (c Conf) HandlerFunc(epf EndpointFunc) *Handler {
 func (c *Conf) WithHook(hooks ...Hook) *Conf { c.hooks = append(c.hooks, hooks...); return c }
 func (c Conf) Hooks() []Hook                 { return c.hooks }
 
+// OnErrorFunc can be provided to handle errors
+type OnErrorFunc func(isClient bool, err error) Output
+
 // OnErrorRender determines how the response rendering handles error
-func (c *Conf) SetOnErrorRender(h func(isClient bool, err error) Output) *Conf { c.errh = h; return c }
-func (c Conf) OnErrorRender() func(isClient bool, err error) Output {
+func (c *Conf) SetOnErrorRender(h OnErrorFunc) *Conf { c.errh = h; return c }
+func (c Conf) OnErrorRender() OnErrorFunc {
 	return c.errh
 }
 
@@ -107,5 +110,5 @@ type ConfReader interface {
 	Languages() []string
 	Validator() Validator
 	QueryDecoder() epcoding.URLValuesDecoder
-	OnErrorRender() func(isClient bool, err error) Output
+	OnErrorRender() OnErrorFunc
 }

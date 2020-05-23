@@ -72,6 +72,9 @@ output. But having the different error types is confusing.
 - [x] SHOULD make handling errors less unwieldy, need to add a logger to see them, need to create custom outputs, 
              needs to setup html template with correct name
 - [x] SHOULD when both query decoder and body decoder is configured, should be easier to protect against CSRF posts with all query params
+- [x] SHOULD have type for OnErrorRender function signature
+- [ ] SHOULD not overwrite content-type header if it is already set by the implementation explicitely, for example if it
+             writes pdf.
 - [ ] SHOULD make it clear in docs or with an error that the order of hooks is important, if one calls "writeHeader" the 
              others won't be able to change the header
 - [ ] SHOULD have a clearer error when here is no html template defined for "error"
@@ -92,6 +95,7 @@ output. But having the different error types is confusing.
 - [x] SHOULD make AppError fields public
 - [x] SHOULD rename "Check" on input to "Validate", way more obvious and less suprising
 - [x] SHOULD SkipEncode should also work when returned directly to the render
+- [ ] COULD  have an hook that sets the status code based on whether the response is in a client or server error mode
 - [x] COULD  include a more composable ways for behaviour to be added to an output: what if it redirects and sets a cookie
 - [x] COULD  allow middleware to install a hook that is called just before the first byte is written to the response body 
              for middleware that needs to write a header
