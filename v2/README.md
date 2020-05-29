@@ -26,7 +26,7 @@ What kind of status codes would be returned
       		 something more specific and return relevant output
 - [x] SHOULD allow request hooks to return an error that is both server, or client
 - [x] SHOULD handle panics in handlers as server errors
-- [ ] SHOULD add and test xml encoding/decoding
+- [x] SHOULD add and test xml encoding/decoding
 - [ ] SHOULD add and test template encoding (text/html) and figure out how to
       		 pass the template name to the encoder
 - [ ] COULD  add a specific output that renders as nil, instead skipping encoding 
