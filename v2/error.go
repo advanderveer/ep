@@ -4,10 +4,23 @@ import "errors"
 
 type Op string
 
+type ErrorKind uint8
+
+const (
+	OtherError        ErrorKind = iota
+	ServerError                 // unexpected server condition
+	UnacceptableError           // no encoder supports what the client accepts
+	UnsupportedError            // no decoder supports the content type sent by the client
+	RequestHookError            // request hook failed to run
+	DecoderError                // decoder failed while decoding
+	EncoderError                // encoder failed while encoding
+)
+
 type Error struct {
-	msg string
-	err error
-	op  Op
+	msg  string
+	err  error
+	op   Op
+	kind ErrorKind
 }
 
 func (e *Error) Is(target error) bool {
@@ -17,6 +30,10 @@ func (e *Error) Is(target error) bool {
 	}
 
 	if terr.op != "" && terr.op != e.op {
+		return false
+	}
+
+	if terr.kind != OtherError && terr.kind != e.kind {
 		return false
 	}
 
@@ -53,6 +70,8 @@ func Err(args ...interface{}) *Error {
 			e.err = at
 		case string:
 			e.msg = at
+		case ErrorKind:
+			e.kind = at
 		default:
 			panic("ep: unsupported argument for building error")
 		}

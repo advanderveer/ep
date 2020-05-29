@@ -31,12 +31,12 @@ func TestPrivateNegotiate(t *testing.T) {
 		expEncCT  string
 	}{
 		{
-			expEncErr: Err(Op("negotiateEncoder")),
+			expEncErr: Err(Op("negotiateEncoder"), ServerError),
 		},
 		{
 			method: "POST",
 			body:   "{}",
-			expErr: Err(Op("negotiateDecoder")),
+			expErr: Err(Op("negotiateDecoder"), UnsupportedError),
 		},
 		{
 			method:   "POST",
@@ -235,7 +235,7 @@ func TestPrivateRender(t *testing.T) {
 		},
 		{
 			out:     struct{}{},
-			expErr:  Err(Op("negotiateEncoder"), "no encoders configured"),
+			expErr:  Err(Op("negotiateEncoder"), ServerError),
 			expCode: 200,
 		},
 		{
@@ -248,7 +248,7 @@ func TestPrivateRender(t *testing.T) {
 		{
 			out:     make(chan struct{}), //something that cannot be encoded
 			encs:    []coding.Encoding{coding.JSON{}},
-			expErr:  Err(Op("response.render"), "response body encoder failed"),
+			expErr:  Err(Op("response.render"), EncoderError),
 			expCode: 200,
 		},
 		{ //without error hooks, the errors are logged to stdlogger
@@ -322,7 +322,7 @@ func TestRenderWithNilEncoderAndNoError(t *testing.T) {
 	res := newResponse(w, r, nil, nil, nil)
 
 	err := res.render("foo")
-	if !errors.Is(err, Err(Op("response.render"), "no encoder to serialize non-nil output value")) {
+	if !errors.Is(err, Err(Op("response.render"), ServerError)) {
 		t.Fatalf("expected error, got: %#v", err)
 	}
 }
@@ -367,7 +367,7 @@ func TestPrivateBind(t *testing.T) {
 		{
 			method: "POST", body: `{"Foo": "bar"}`,
 			decs:   []coding.Decoding{coding.JSON{}},
-			expErr: Err(Op("response.bind"), "request body decoder failed"),
+			expErr: Err(Op("response.bind"), DecoderError),
 		},
 		{
 			in:     &struct{ Foo string }{},
@@ -379,7 +379,7 @@ func TestPrivateBind(t *testing.T) {
 		{
 			hooks:  []RequestHook{errhook},
 			expOK:  false,
-			expErr: Err(Op("response.bind"), "request hook failed"),
+			expErr: Err(Op("response.bind"), RequestHookError),
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {

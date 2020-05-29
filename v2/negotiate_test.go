@@ -23,7 +23,7 @@ func TestNegotiateResponseEncoder(t *testing.T) {
 		expCT  string
 	}{
 		{
-			expErr: Err(Op("negotiateEncoder"), "no encoders configured"),
+			expErr: Err(Op("negotiateEncoder"), ServerError),
 		},
 		{
 			encs:   []coding.Encoding{coding.JSON{}},
@@ -33,7 +33,7 @@ func TestNegotiateResponseEncoder(t *testing.T) {
 		{
 			accept: "foo/bar",
 			encs:   []coding.Encoding{coding.JSON{}},
-			expErr: Err(Op("negotiateEncoder"), "no configured encoder produces what the client accepts"),
+			expErr: Err(Op("negotiateEncoder"), UnacceptableError),
 		},
 		{
 			accept: "application/json",
@@ -79,12 +79,12 @@ func TestNegotiateRequestDecoder(t *testing.T) {
 		{"POST", "", "application/json", nil, nil, nil},
 		{
 			"POST", "{}", "application/json ; charset=UTF-8", nil, nil,
-			Err(Op("negotiateDecoder"), "relevant and non-empty request body but no decoders configured"),
+			Err(Op("negotiateDecoder"), UnsupportedError),
 		},
 		{
 			"POST", "{}", "foo/bar ; charset=UTF-8",
 			[]coding.Decoding{coding.JSON{}}, nil,
-			Err(Op("negotiateDecoder"), "relevant and non-empty request body no configured decoder accepts it"),
+			Err(Op("negotiateDecoder"), UnsupportedError),
 		},
 		{
 			"POST", "{}", "application/json ; charset=UTF-8",

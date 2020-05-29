@@ -21,6 +21,11 @@ func TestErrorBuilding(t *testing.T) {
 	if e3.Error() != "my op: my other message: my message" {
 		t.Fatalf("unexpected, got: %v", e3.Error())
 	}
+
+	e4 := Err("my other message", e1, Op("my op"), OtherError)
+	if e4.Error() != "my op: my other message: my message" {
+		t.Fatalf("unexpected, got: %v", e4.Error())
+	}
 }
 
 func TestErrorBuildingPanic(t *testing.T) {
@@ -47,11 +52,13 @@ func TestErrorMatching(t *testing.T) {
 		{Err(Err("foo")), Err(Err("foo")), true},
 		{Err(Err("foo")), Err(Err("bar")), false},
 		{Err("foo"), errors.New("foo"), false},
+		{Err(ErrorKind(1)), Err(ErrorKind(1)), true},
+		{Err(ErrorKind(155)), Err(ErrorKind(2)), false},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			actual := errors.Is(c.err, c.target)
 			if actual != c.expect {
-				t.Errorf("errors.Is(%v, %v)=%v, got: %v", c.err, c.target, c.expect, actual)
+				t.Errorf("errors.Is(%s, %s)=%v, got: %v", c.err, c.target, c.expect, actual)
 			}
 		})
 	}

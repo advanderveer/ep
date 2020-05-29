@@ -63,7 +63,9 @@ func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, 
 	// At this point the server will be needing at least one decoding
 	if len(decs) < 1 {
 		return nil, Err(op,
-			"relevant and non-empty request body but no decoders configured")
+			"relevant and non-empty request body but no decoders configured",
+			UnsupportedError,
+		)
 	}
 
 	ct := detectContentType(peek)
@@ -87,7 +89,9 @@ func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, 
 	_, aski := accept.Negotiate(asks, []string{value})
 	if aski < 0 {
 		return nil, Err(op,
-			"relevant and non-empty request body no configured decoder accepts it")
+			"relevant and non-empty request body no configured decoder accepts it",
+			UnsupportedError,
+		)
 	}
 
 	return decs[aski].Decoder(r), nil
@@ -101,7 +105,7 @@ func negotiateEncoder(
 	const op Op = "negotiateEncoder"
 
 	if len(encs) < 1 {
-		return nil, "", Err(op, "no encoders configured")
+		return nil, "", Err(op, "no encoders configured", ServerError)
 	}
 
 	asks := r.Header.Values("Accept")
@@ -116,7 +120,10 @@ func negotiateEncoder(
 
 	offeri, _ := accept.Negotiate(asks, offers)
 	if offeri < 0 {
-		return nil, "", Err(op, "no configured encoder produces what the client accepts")
+		return nil, "", Err(op,
+			"no configured encoder produces what the client accepts",
+			UnacceptableError,
+		)
 	}
 
 	return encs[offeri].Encoder(w), encs[offeri].Produces(), nil

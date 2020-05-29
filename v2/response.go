@@ -150,7 +150,7 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 
 	for _, h := range res.reqHooks {
 		if err := h(res.req, in); err != nil {
-			return false, Err(op, "request hook failed", err)
+			return false, Err(op, "request hook failed", err, RequestHookError)
 		}
 	}
 
@@ -162,7 +162,7 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 	if err == io.EOF {
 		return false, nil
 	} else if err != nil {
-		return false, Err(op, "request body decoder failed", err)
+		return false, Err(op, "request body decoder failed", DecoderError)
 	}
 
 	return true, nil
@@ -233,10 +233,9 @@ func (res *response) render(v interface{}) (err error) {
 	res.currentOutput = v
 	defer func() { res.currentOutput = nil }()
 
-	// The encoder is nil without any error, so it was expected. In that case
-	// we still want to write the header
+	// The encoder is nil without any enc negotiation error
 	if res.enc == nil {
-		return Err(op, "no encoder to serialize non-nil output value")
+		return Err(op, "no encoder to serialize non-nil output value", ServerError)
 	}
 
 	var ctFromEnc bool
@@ -254,7 +253,7 @@ func (res *response) render(v interface{}) (err error) {
 			res.Header().Del("Content-Type")
 		}
 
-		return Err(op, "response body encoder failed", err)
+		return Err(op, "response body encoder failed", err, EncoderError)
 	}
 
 	return
