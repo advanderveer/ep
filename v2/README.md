@@ -45,18 +45,20 @@ itself.
       		 and none of the encoders match (the first configfured encoding
       		 is always the default)
 - [ ] COULD  lift up the error kind when nesting errors
+- [ ] COULD  move the error to a separate package if it can fully replace the
+             stdlib errors package
 
 - [x] WONT   return text/plain if template encoder is specified a text template. 
              each encoder should only return one type of content, we only support
              html for now
 
 ## Hook Usecases
-- [ ] SHOULD have easy to use hook that allows output to set statuscode
+- [x] SHOULD have easy to use hook that allows output to set statuscode
 - [ ] SHOULD have a hook that can read mux params from the request
 - [ ] SHOULD have a hook that makes redirects easy
 - [ ] SHOULD support a hook that make csrf tokens available to outputs
 - [ ] SHOULD support a hook that adds a localizer to each output
 - [ ] SHOULD support a hook that rewrites the session cookie on each response
-- [ ] SHOULD have error hooks that does sensible defaults for error rendering
+- [x] SHOULD have error hooks that does sensible defaults for error rendering
 		- but what to show for template render
 		- but only makes sense with status response hook
