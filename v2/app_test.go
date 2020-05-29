@@ -34,6 +34,10 @@ func TestApp(t *testing.T) {
 		w.Render(nil, errors.New("foo"))
 	}
 
+	panicHandle := func(w ResponseWriter, r *http.Request) {
+		panic("foo")
+	}
+
 	stream := func(w ResponseWriter, r *http.Request) {
 		for {
 			var in struct{ Foo string }
@@ -95,6 +99,15 @@ func TestApp(t *testing.T) {
 
 			method: "GET", handle: justBind,
 			expBody: `{"message":"response.bind: request hook failed: failing request hook"}` + "\n", expCode: 404,
+		},
+
+		{ // panic should also render with encoder
+			opt: Options(
+				ResponseEncoding(coding.JSON{}),
+				ErrorHook(errHook)),
+
+			method: "GET", handle: panicHandle,
+			expBody: `{"message":"foo"}` + "\n", expCode: 200,
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {

@@ -14,6 +14,7 @@ type ResponseWriter interface {
 	Negotiate([]coding.Decoding, []coding.Encoding) bool
 	Bind(in interface{}) bool
 	Render(out interface{}, err error)
+	Recover()
 	http.ResponseWriter
 }
 
@@ -257,4 +258,24 @@ func (res *response) render(v interface{}) (err error) {
 	}
 
 	return
+}
+
+func (res *response) Recover() {
+	r := recover()
+	if r == nil {
+		return
+	}
+
+	var perr error
+	switch rt := r.(type) {
+	case error:
+		perr = Err(Op("response.Recover"), ServerError, rt)
+	case string:
+		perr = Err(Op("response.Recover"), rt, ServerError)
+	default:
+		perr = Err(Op("response.Recover"), "unknown panic", ServerError)
+		return
+	}
+
+	res.Render(nil, perr)
 }

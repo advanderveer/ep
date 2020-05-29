@@ -530,7 +530,7 @@ func TestNegotiateError(t *testing.T) {
 	}
 }
 
-func TestNegotiate(t *testing.T) {
+func TestNegotiateMinimalSuccess(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 
@@ -540,6 +540,33 @@ func TestNegotiate(t *testing.T) {
 	ok := res.Negotiate(nil, nil)
 	if !ok {
 		t.Fatalf("unexpected, got: %v", ok)
+	}
+}
+
+func TestRecover(t *testing.T) {
+	e1 := errors.New("bar")
+
+	for i, c := range []struct {
+		panic  interface{}
+		expErr error
+	}{
+		{panic: "foo", expErr: Err(Op("response.Recover"), ServerError)},
+		{panic: e1, expErr: Err(Op("response.Recover"), ServerError, e1)},
+		{panic: 1, expErr: Err(Op("response.Recover"), ServerError, "unknown panic")},
+	} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			r := httptest.NewRequest("GET", "/", nil)
+			w := httptest.NewRecorder()
+
+			h := shouldRenderErr(t, c.expErr)
+			res := newResponse(w, r, nil, nil, []ErrorHook{h})
+			res.mustNegotiate(nil, nil)
+
+			func() {
+				defer res.Recover()
+				panic(c.panic)
+			}()
+		})
 	}
 }
 
