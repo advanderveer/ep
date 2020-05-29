@@ -20,7 +20,7 @@ __Features:__
 - [x] SHOULD add and test xml encoding/decoding
 - [x] SHOULD add and test template encoding (text/html) and figure out how to
       		 pass the template name to the encoder
-- [ ] SHOULD add and test form decoding
+- [x] SHOULD add and test form decoding
 - [ ] COULD  add a specific output that renders as nil, instead skipping encoding 
 - [ ] COULD  allow JSON encoder/decoder configuration, i.e: indentation
 - [ ] COULD  prevent hooks from calling interface methods if the value is nil and
