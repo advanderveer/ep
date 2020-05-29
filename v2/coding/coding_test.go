@@ -2,17 +2,23 @@ package coding
 
 import (
 	"errors"
+	"html/template"
 	"net/http/httptest"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
-	"text/template"
 )
 
 type output1 struct{ Foo string }
 
 func (o output1) Template() string { return "root" }
+
+type output2 struct{ Foo string }
+
+func (o output2) Template() *template.Template {
+	return template.Must(template.New("root").Parse(`hello2 {{.Foo}}!`))
+}
 
 func TestEncodings(t *testing.T) {
 	tmpl1 := template.Must(template.New("root").Parse(`hello {{ .Foo }}!`))
@@ -26,8 +32,9 @@ func TestEncodings(t *testing.T) {
 	}{
 		{JSON{}, struct{}{}, nil, "application/json", `{}` + "\n"},
 		{XML{}, output1{"bar"}, nil, "application/xml", `<output1><Foo>bar</Foo></output1>`},
-		{NewTemplate(tmpl1), output1{"bar"}, nil, "text/html", `hello bar!`},
-		{NewTemplate(tmpl1), struct{}{}, NoTemplateSpecified, "text/html", ``},
+		{NewHTML(tmpl1), output1{"bar"}, nil, "text/html", `hello bar!`},
+		{NewHTML(nil), output2{"bar"}, nil, "text/html", `hello2 bar!`},
+		{NewHTML(tmpl1), struct{}{}, NoTemplateSpecified, "text/html", ``},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			if c.enc.Produces() != c.expProduces {

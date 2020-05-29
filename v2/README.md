@@ -12,6 +12,17 @@ __Features:__
 - __Well tested__, benchmarked and depends only on the standard library
 - Supports __streaming__ requests and responses
 
+## Build-in Hooks
+Would be nice if ep comes with a hook that writes the status code based on a
+method that the output can implement. Support both `Head(h Header) int`
+or `Status() int`
+
+With that enabled, it is possible to create an error hook that comes with
+sensible defaults and logs to a provided logger. But how to support such a
+build-in error with the template encoder? Maybe allow returning a template
+itself. 
+
+
 ## Backlog
 - [x] SHOULD be able to use error hooks to assert if errors are server, client or
       		 something more specific and return relevant output
@@ -21,14 +32,23 @@ __Features:__
 - [x] SHOULD add and test template encoding (text/html) and figure out how to
       		 pass the template name to the encoder
 - [x] SHOULD add and test form decoding
+- [x] SHOULD allow outputs to specify template method that returns the template
+             type directly, not just the name
+
 - [ ] COULD  add a specific output that renders as nil, instead skipping encoding 
-- [ ] COULD  allow JSON encoder/decoder configuration, i.e: indentation
+- [ ] COULD  allow xml/json/form/template encoder/decoder configuration with the
+             option pattern or outputs implementing a certain interface. The 
+             latter is more flexible
 - [ ] COULD  prevent hooks from calling interface methods if the value is nil and
       		 causing a panic, requires reflect so maybe disable with a flag
 - [ ] COULD  use a default encoding when the client specifies an accept header
       		 and none of the encoders match (the first configfured encoding
       		 is always the default)
 - [ ] COULD  lift up the error kind when nesting errors
+
+- [x] WONT   return text/plain if template encoder is specified a text template. 
+             each encoder should only return one type of content, we only support
+             html for now
 
 ## Hook Usecases
 - [ ] SHOULD have easy to use hook that allows output to set statuscode
