@@ -7,10 +7,15 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"text/template"
 )
 
+type output1 struct{ Foo string }
+
+func (o output1) Template() string { return "root" }
+
 func TestEncodings(t *testing.T) {
-	type Output struct{ Foo string }
+	tmpl1 := template.Must(template.New("root").Parse(`hello {{ .Foo }}!`))
 
 	for i, c := range []struct {
 		enc         Encoding
@@ -20,7 +25,9 @@ func TestEncodings(t *testing.T) {
 		expBody     string
 	}{
 		{JSON{}, struct{}{}, nil, "application/json", `{}` + "\n"},
-		{XML{}, Output{"bar"}, nil, "application/xml", `<Output><Foo>bar</Foo></Output>`},
+		{XML{}, output1{"bar"}, nil, "application/xml", `<output1><Foo>bar</Foo></output1>`},
+		{NewTemplate(tmpl1), output1{"bar"}, nil, "text/html", `hello bar!`},
+		{NewTemplate(tmpl1), struct{}{}, NoTemplateSpecified, "text/html", ``},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			if c.enc.Produces() != c.expProduces {

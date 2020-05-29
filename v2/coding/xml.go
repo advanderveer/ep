@@ -5,21 +5,21 @@ import (
 	"net/http"
 )
 
-// XML decoding
+// XML encoding and decoding
 type XML struct{}
 
-func (d XML) Produces() string {
+func (_ XML) Produces() string {
 	return "application/xml"
 }
 
-func (d XML) Encoder(w http.ResponseWriter) Encoder {
+func (_ XML) Encoder(w http.ResponseWriter) Encoder {
 	return xml.NewEncoder(w)
 }
 
-func (d XML) Accepts() string {
+func (_ XML) Accepts() string {
 	return "application/xml, text/xml"
 }
 
-func (d XML) Decoder(r *http.Request) Decoder {
+func (_ XML) Decoder(r *http.Request) Decoder {
 	return xml.NewDecoder(r.Body)
 }

@@ -5,21 +5,21 @@ import (
 	"net/http"
 )
 
-// JSON decoding
+// JSON encoding and decoding
 type JSON struct{}
 
-func (d JSON) Produces() string {
+func (_ JSON) Produces() string {
 	return "application/json"
 }
 
-func (d JSON) Encoder(w http.ResponseWriter) Encoder {
+func (_ JSON) Encoder(w http.ResponseWriter) Encoder {
 	return json.NewEncoder(w)
 }
 
-func (d JSON) Accepts() string {
+func (_ JSON) Accepts() string {
 	return "application/json, application/vnd.api+json"
 }
 
-func (d JSON) Decoder(r *http.Request) Decoder {
+func (_ JSON) Decoder(r *http.Request) Decoder {
 	return json.NewDecoder(r.Body)
 }

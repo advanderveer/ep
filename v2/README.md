@@ -12,23 +12,15 @@ __Features:__
 - __Well tested__, benchmarked and depends only on the standard library
 - Supports __streaming__ requests and responses
 
-## Error Kinds
-What kind of status codes would be returned
-
-- 406: not acceptable - couldn't serve what is accepted by the client:
-"Unless it was a HEAD request, the response SHOULD include an entity containing a list of available entity characteristics and location(s) from which the user or user agent can choose the one most appropriate."
-"It is pretty rare to serve this, it is more common to use default values"
-- 415: unsupported media type - server can't parse the provided content type
-- 400: bad request - when decoding fails, one way or the other
-
 ## Backlog
 - [x] SHOULD be able to use error hooks to assert if errors are server, client or
       		 something more specific and return relevant output
 - [x] SHOULD allow request hooks to return an error that is both server, or client
 - [x] SHOULD handle panics in handlers as server errors
 - [x] SHOULD add and test xml encoding/decoding
-- [ ] SHOULD add and test template encoding (text/html) and figure out how to
+- [x] SHOULD add and test template encoding (text/html) and figure out how to
       		 pass the template name to the encoder
+- [ ] SHOULD add and test form decoding
 - [ ] COULD  add a specific output that renders as nil, instead skipping encoding 
 - [ ] COULD  allow JSON encoder/decoder configuration, i.e: indentation
 - [ ] COULD  prevent hooks from calling interface methods if the value is nil and
