@@ -22,9 +22,9 @@ What kind of status codes would be returned
 - 400: bad request - when decoding fails, one way or the other
 
 ## Backlog
-- [ ] SHOULD be able to use error hooks to assert if errors are server, client or
+- [x] SHOULD be able to use error hooks to assert if errors are server, client or
       		 something more specific and return relevant output
-- [ ] SHOULD allow request hooks to return an error that is both server, or client
+- [x] SHOULD allow request hooks to return an error that is both server, or client
 - [ ] SHOULD handle panics in handlers as server errors
 - [ ] SHOULD add and test xml encoding/decoding
 - [ ] SHOULD add and test template encoding (text/html) and figure out how to

@@ -23,6 +23,10 @@ type Error struct {
 	kind ErrorKind
 }
 
+func (e *Error) Unwrap() error {
+	return e.err
+}
+
 func (e *Error) Is(target error) bool {
 	terr, ok := target.(*Error)
 	if !ok {

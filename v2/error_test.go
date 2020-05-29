@@ -28,6 +28,26 @@ func TestErrorBuilding(t *testing.T) {
 	}
 }
 
+func TestErrorUnwrapping(t *testing.T) {
+	e1 := errors.New("foo")
+	e2 := Err(e1, "foo")
+	if !errors.Is(e2, e1) {
+		t.Fatalf("e2 should be a e1")
+	}
+
+	e3 := Err(Op("my.op"))
+	e4 := Err(e3, "foo")
+	if !errors.Is(e4, Err(Op("my.op"))) {
+		t.Fatalf("e4 should be a e3")
+	}
+
+	e5 := Err(Op("my.op"))
+	e6 := Err(e5, "foo")
+	if errors.Is(e6, Err(Op("my.other.op"))) {
+		t.Fatalf("e6 should not be a e5")
+	}
+}
+
 func TestErrorBuildingPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
