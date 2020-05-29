@@ -1,7 +1,6 @@
 package coding
 
 import (
-	"io"
 	"net/http"
 )
 
@@ -24,5 +23,5 @@ type Decoding interface {
 // Encoding describes encoding that procoduces a certain content type
 type Encoding interface {
 	Produces() string
-	Encoder(w io.Writer) Encoder
+	Encoder(w http.ResponseWriter) Encoder
 }

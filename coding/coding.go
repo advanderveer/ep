@@ -12,7 +12,7 @@ import (
 // Encoding describes the production of a certain type of content
 type Encoding interface {
 	Produces() string
-	Encoder(w io.Writer) Encoder
+	Encoder(w http.ResponseWriter) Encoder
 }
 
 // Encoder can be used for actual value encoding

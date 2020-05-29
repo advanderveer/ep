@@ -2,7 +2,6 @@ package ep
 
 import (
 	"bytes"
-	"io"
 	"net/http"
 
 	"github.com/advanderveer/ep/v2/accept"
@@ -99,7 +98,7 @@ func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, 
 
 func negotiateEncoder(
 	r *http.Request,
-	w io.Writer,
+	w http.ResponseWriter,
 	encs []coding.Encoding,
 ) (coding.Encoder, string, error) {
 	const op Op = "negotiateEncoder"

@@ -1,7 +1,6 @@
 package ep
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -46,7 +45,7 @@ func TestNegotiateResponseEncoder(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 			r.Header.Set("Accept", c.accept)
 
-			w := bytes.NewBuffer(nil)
+			w := httptest.NewRecorder()
 
 			enc, ct, err := negotiateEncoder(r, w, c.encs)
 			if !errors.Is(err, c.expErr) {

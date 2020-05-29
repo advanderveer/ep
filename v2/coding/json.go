@@ -2,7 +2,6 @@ package coding
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 )
 
@@ -13,7 +12,7 @@ func (d JSON) Produces() string {
 	return "application/json"
 }
 
-func (d JSON) Encoder(w io.Writer) Encoder {
+func (d JSON) Encoder(w http.ResponseWriter) Encoder {
 	return json.NewEncoder(w)
 }
 
