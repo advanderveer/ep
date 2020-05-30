@@ -35,6 +35,11 @@ itself.
 - [x] SHOULD allow outputs to specify template method that returns the template
              type directly, not just the name
 
+- [ ] COULD  make the response.Render() method take variadic nr of interface{}
+             arguments such that exec methods can return any nr of outputs.
+             response.Bind() might also be able to bind more then one input.
+             Might be usefull if the endpoint has a two distict outputs with
+             different templates and logic? Errors are already different outputs
 - [ ] COULD  add a specific output that renders as nil, instead skipping encoding 
 - [ ] COULD  allow xml/json/form/template encoder/decoder configuration with the
              option pattern or outputs implementing a certain interface. The 
