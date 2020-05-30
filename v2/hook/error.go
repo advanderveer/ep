@@ -10,9 +10,10 @@ import (
 	ep "github.com/advanderveer/ep/v2"
 )
 
-// NewPrivateError creates an error log that logs errors to the provided logger
+// NewPrivateError creates an error hook that logs errors to the provided logger
 // and doesn't reveal any info to the client except for a status code and the
-// standard text that is associated with that code.
+// standard HTTP text that is associated with that code. It comes with default
+// outputs for the XML, JSON and HTML encoders.
 func NewPrivateError(logs *log.Logger) func(err error) interface{} {
 	return func(err error) interface{} {
 		if logs != nil {
