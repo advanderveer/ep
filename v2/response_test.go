@@ -239,11 +239,14 @@ func TestPrivateRender(t *testing.T) {
 			expCode: 200,
 		},
 		{
-			out:       struct{}{},
-			encs:      []coding.Encoding{coding.JSON{}},
-			expCode:   200,
-			expBody:   "{}\n",
-			expHeader: http.Header{"Content-Type": {"application/json"}},
+			out:     struct{}{},
+			encs:    []coding.Encoding{coding.JSON{}},
+			expCode: 200,
+			expBody: "{}\n",
+			expHeader: http.Header{
+				"Content-Type":           {"application/json"},
+				"X-Content-Type-Options": {"nosniff"},
+			},
 		},
 		{
 			out:     make(chan struct{}), //something that cannot be encoded
@@ -258,20 +261,26 @@ func TestPrivateRender(t *testing.T) {
 			expLogs: "my error",
 		},
 		{ // following tests check that the first hook's result takes precedence
-			out:       Err("my error"),
-			encs:      []coding.Encoding{coding.JSON{}},
-			hooks:     []ErrorHook{hook1, hook2},
-			expCode:   200,
-			expBody:   `{"message":"my error"}` + "\n",
-			expHeader: http.Header{"Content-Type": {"application/json"}},
+			out:     Err("my error"),
+			encs:    []coding.Encoding{coding.JSON{}},
+			hooks:   []ErrorHook{hook1, hook2},
+			expCode: 200,
+			expBody: `{"message":"my error"}` + "\n",
+			expHeader: http.Header{
+				"Content-Type":           {"application/json"},
+				"X-Content-Type-Options": {"nosniff"},
+			},
 		},
 		{
-			out:       Err("other error"),
-			encs:      []coding.Encoding{coding.JSON{}},
-			hooks:     []ErrorHook{hook2, hook1},
-			expCode:   200,
-			expBody:   `{"error":"other error"}` + "\n",
-			expHeader: http.Header{"Content-Type": {"application/json"}},
+			out:     Err("other error"),
+			encs:    []coding.Encoding{coding.JSON{}},
+			hooks:   []ErrorHook{hook2, hook1},
+			expCode: 200,
+			expBody: `{"error":"other error"}` + "\n",
+			expHeader: http.Header{
+				"Content-Type":           {"application/json"},
+				"X-Content-Type-Options": {"nosniff"},
+			},
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {

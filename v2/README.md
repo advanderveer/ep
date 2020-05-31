@@ -34,6 +34,10 @@ itself.
 - [x] SHOULD add and test form decoding
 - [x] SHOULD allow outputs to specify template method that returns the template
              type directly, not just the name
+- [ ] SHOULD make sure that the PrivateError hook also sets the "no-sniff"
+			 header like the std library
+- [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
+             redirect method
 
 - [ ] COULD  make the response.Render() method take variadic nr of interface{}
              arguments such that exec methods can return any nr of outputs.

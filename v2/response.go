@@ -243,6 +243,9 @@ func (res *response) render(v interface{}) (err error) {
 	if res.Header().Get("Content-Type") == "" {
 		ctFromEnc = true
 		res.Header().Set("Content-Type", res.encContentType)
+
+		// we know the content-type for sure so we can prevent content sniffing
+		res.Header().Set("X-Content-Type-Options", "nosniff")
 	}
 
 	err = res.enc.Encode(v)
@@ -252,6 +255,7 @@ func (res *response) render(v interface{}) (err error) {
 		// reset it such that a subsequent call to render can set it again.
 		if ctFromEnc {
 			res.Header().Del("Content-Type")
+			res.Header().Del("X-Content-Type-Options")
 		}
 
 		return Err(op, "response body encoder failed", err, EncoderError)
