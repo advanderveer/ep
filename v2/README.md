@@ -22,6 +22,12 @@ sensible defaults and logs to a provided logger. But how to support such a
 build-in error with the template encoder? Maybe allow returning a template
 itself. 
 
+How about allowing handlers to return outputs that are errors (implement 
+the Error() string interface). Does that work?
+
+The PrivateError hook only handles ep errors (and panics, which are always
+safe to consider to be server errors i guess). 
+
 
 ## Backlog
 - [x] SHOULD be able to use error hooks to assert if errors are server, client or
@@ -34,8 +40,10 @@ itself.
 - [x] SHOULD add and test form decoding
 - [x] SHOULD allow outputs to specify template method that returns the template
              type directly, not just the name
-- [ ] SHOULD make sure that the PrivateError hook also sets the "no-sniff"
+- [x] SHOULD make sure that the PrivateError hook also sets the "nosniff"
 			 header like the std library
+- [x] SHOULD make it clear that the build-in error hook only creates outputs for
+             ep.Error errors
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 
@@ -65,8 +73,9 @@ itself.
 - [x] SHOULD have easy to use hook that allows output to set statuscode
 - [ ] SHOULD have a hook that can read mux params from the request
 - [ ] SHOULD have a hook that makes redirects easy
-- [ ] SHOULD support a hook that make csrf tokens available to outputs
-- [ ] SHOULD support a hook that adds a localizer to each output
+- [ ] SHOULD support hook that supports query decoding of the url
+- [ ] SHOULD support a hook that make csrf tokens available to outputs (instead of through context)
+- [ ] SHOULD support a hook that adds a localizer to each output (instead of through context)
 - [ ] SHOULD support a hook that rewrites the session cookie on each response
 - [x] SHOULD have error hooks that does sensible defaults for error rendering
 		- but what to show for template render

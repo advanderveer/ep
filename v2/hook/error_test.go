@@ -16,7 +16,7 @@ func TestPrivateErrorLogs(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	logs := log.New(buf, "", 0)
 
-	NewPrivateError(logs)(errors.New("foo"))
+	NewStandardError(logs)(errors.New("foo"))
 
 	if buf.String() != "foo\n" {
 		t.Fatalf("should have logged, got: %v", buf.String())
@@ -30,7 +30,10 @@ func TestPrivateErrorWithResponseHookAndEncoding(t *testing.T) {
 		expCode int
 		expBody string
 	}{
+		// should not create outputs for non-ep errors and nil
 		{coding.JSON{}, nil, 200, "null\n"},
+		{coding.JSON{}, errors.New("foo"), 200, "null\n"},
+
 		{coding.JSON{}, ep.Err("foo"), 500, `{"message":"Internal Server Error"}` + "\n"},
 		{coding.JSON{}, ep.Err(ep.DecoderError), 400, `{"message":"Bad Request"}` + "\n"},
 		{coding.JSON{}, ep.Err(ep.UnsupportedError), 415, `{"message":"Unsupported Media Type"}` + "\n"},
@@ -41,7 +44,7 @@ func TestPrivateErrorWithResponseHookAndEncoding(t *testing.T) {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()
 
-			out := NewPrivateError(nil)(c.err)
+			out := NewStandardError(nil)(c.err)
 			Status(w, nil, out)
 
 			err := c.enc.Encoder(w).Encode(out)

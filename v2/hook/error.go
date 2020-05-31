@@ -10,16 +10,17 @@ import (
 	ep "github.com/advanderveer/ep/v2"
 )
 
-// NewPrivateError creates an error hook that logs errors to the provided logger
-// and doesn't reveal any info to the client except for a status code and the
+// NewStandardError creates an error hook for handling ep.Error errors. It logs
+// errors to the provided logger creates sensible status codes and only revels
 // standard HTTP text that is associated with that code. It comes with default
 // outputs for the XML, JSON and HTML encoders.
-func NewPrivateError(logs *log.Logger) func(err error) interface{} {
+func NewStandardError(logs *log.Logger) func(err error) interface{} {
 	return func(err error) interface{} {
 		if logs != nil {
 			logs.Print(err)
 		}
 
+		// we only create outputs for ep.Error types
 		var eperr *ep.Error
 		if !errors.As(err, &eperr) {
 			return nil
