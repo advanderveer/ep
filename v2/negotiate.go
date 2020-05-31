@@ -40,19 +40,13 @@ func detectContentType(b []byte) (ct string) {
 func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, error) {
 	const op Op = "negotiateDecoder"
 
-	// GET or HEAD request may have a body but they should not be considered
-	// by the server
-	if r.Method == http.MethodGet || r.Method == http.MethodHead {
-		return nil, nil
-	}
-
 	// In order to sniff content and figuring out if there is any body with
 	// certainty we buffer the request body. If peek returns no bytes we
 	// know for sure the request is empty
 	prc := Buffer(r.Body)
 	peek, _ := prc.Peek(512)
 	if len(peek) < 1 {
-		return nil, nil
+		return nil, Err(op, "empty request body", EmptyRequestError)
 	}
 
 	// Since we peeked, the original reader doesn't provide the ability to read

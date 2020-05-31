@@ -16,7 +16,7 @@ import (
 	"github.com/advanderveer/ep/v2/coding"
 )
 
-func TestPrivateNegotiate(t *testing.T) {
+func TestNegotiate(t *testing.T) {
 	for i, c := range []struct {
 		method string
 		body   string
@@ -31,12 +31,14 @@ func TestPrivateNegotiate(t *testing.T) {
 		expEncCT  string
 	}{
 		{
+			expErr:    Err(Op("negotiateDecoder"), EmptyRequestError),
 			expEncErr: Err(Op("negotiateEncoder"), ServerError),
 		},
 		{
-			method: "POST",
-			body:   "{}",
-			expErr: Err(Op("negotiateDecoder"), UnsupportedError),
+			method:    "POST",
+			body:      "{}",
+			expErr:    Err(Op("negotiateDecoder"), UnsupportedError),
+			expEncErr: Err(Op("negotiateEncoder"), ServerError),
 		},
 		{
 			method:   "POST",
@@ -56,9 +58,9 @@ func TestPrivateNegotiate(t *testing.T) {
 			a := New(c.opts...)
 
 			res := newResponse(w, r, a.reqHooks, a.resHooks, a.errHooks)
-			err := res.negotiate(a.decodings, a.encodings)
-			if !errors.Is(err, c.expErr) {
-				t.Fatalf("expected error %#v, got: %#v", c.expErr, err)
+			res.Negotiate(a.decodings, a.encodings)
+			if !errors.Is(res.decNegotiateErr, c.expErr) {
+				t.Fatalf("expected error %#v, got: %#v", c.expErr, res.decNegotiateErr)
 			}
 
 			if !errors.Is(res.encNegotiateErr, c.expEncErr) {
@@ -292,7 +294,7 @@ func TestPrivateRender(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			res := newResponse(w, r, nil, nil, c.hooks)
-			res.mustNegotiate(nil, c.encs)
+			res.Negotiate(nil, c.encs)
 
 			err := res.render(c.out)
 			if !errors.Is(err, c.expErr) {
@@ -340,7 +342,7 @@ func TestPrivateRenderSequentially(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 	res := newResponse(w, r, nil, nil, nil)
-	res.mustNegotiate(nil, []coding.Encoding{coding.JSON{}})
+	res.Negotiate(nil, []coding.Encoding{coding.JSON{}})
 
 	err := res.render("foo")
 	if err != nil {
@@ -372,7 +374,9 @@ func TestPrivateBind(t *testing.T) {
 		expOK  bool
 		expIn  interface{}
 	}{
-		{},
+		{
+			expErr: Err(EmptyRequestError),
+		},
 		{
 			method: "POST", body: `{"Foo": "bar"}`,
 			decs:   []coding.Decoding{coding.JSON{}},
@@ -396,7 +400,7 @@ func TestPrivateBind(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			res := newResponse(w, r, c.hooks, nil, nil)
-			res.mustNegotiate(c.decs, nil)
+			res.Negotiate(c.decs, nil)
 
 			ok, err := res.bind(c.in)
 			if !errors.Is(err, c.expErr) {
@@ -425,7 +429,7 @@ func TestPrivateBindSequential(t *testing.T) {
 	}
 
 	res := newResponse(w, r, []RequestHook{hook1}, nil, nil)
-	res.mustNegotiate([]coding.Decoding{coding.JSON{}}, nil)
+	res.Negotiate([]coding.Decoding{coding.JSON{}}, nil)
 
 	for i := 0; i < 100; i++ {
 		var in struct{ Foo string }
@@ -454,7 +458,7 @@ func TestPrivateBindSequential(t *testing.T) {
 		}
 	}
 
-	// the ook will be called before the decoder encounters EOF, so the input
+	// the hook will be called before the decoder encounters EOF, so the input
 	// might be partially populated from the hooks
 	if n != 3 {
 		t.Fatalf("unexpected, got: %d", n)
@@ -468,7 +472,7 @@ func TestRenderErrorPrecedence(t *testing.T) {
 
 	h := shouldRenderErr(t, e)
 	res := newResponse(w, r, nil, nil, []ErrorHook{h})
-	res.mustNegotiate(nil, []coding.Encoding{coding.JSON{}})
+	res.Negotiate(nil, []coding.Encoding{coding.JSON{}})
 
 	res.Render(struct{}{}, e)
 }
@@ -489,7 +493,7 @@ func TestRenderDoublePassPanic(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 	res := newResponse(w, r, nil, nil, []ErrorHook{hook})
-	res.mustNegotiate(nil, []coding.Encoding{coding.JSON{}})
+	res.Negotiate(nil, []coding.Encoding{coding.JSON{}})
 
 	res.Render(make(chan struct{}), nil)
 }
@@ -499,7 +503,7 @@ func TestBindSuccess(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	res := newResponse(w, r, nil, nil, nil)
-	res.mustNegotiate([]coding.Decoding{coding.JSON{}}, nil)
+	res.Negotiate([]coding.Decoding{coding.JSON{}}, nil)
 
 	var in struct{ Foo string }
 	ok := res.Bind(&in)
@@ -518,36 +522,10 @@ func TestBindError(t *testing.T) {
 
 	h := shouldRenderErr(t, Err(Op("response.bind")))
 	res := newResponse(w, r, nil, nil, []ErrorHook{h})
-	res.mustNegotiate([]coding.Decoding{coding.JSON{}}, nil)
+	res.Negotiate([]coding.Decoding{coding.JSON{}}, nil)
 
 	ok := res.Bind(struct{}{})
 	if ok {
-		t.Fatalf("unexpected, got: %v", ok)
-	}
-}
-
-func TestNegotiateError(t *testing.T) {
-	r := httptest.NewRequest("POST", "/", strings.NewReader(`{}`))
-	w := httptest.NewRecorder()
-
-	h := shouldRenderErr(t, Err(Op("negotiateDecoder")))
-	res := newResponse(w, r, nil, nil, []ErrorHook{h})
-
-	ok := res.Negotiate(nil, nil)
-	if ok {
-		t.Fatalf("unexpected, got: %v", ok)
-	}
-}
-
-func TestNegotiateMinimalSuccess(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
-	w := httptest.NewRecorder()
-
-	h := shouldRenderErr(t, nil)
-	res := newResponse(w, r, nil, nil, []ErrorHook{h})
-
-	ok := res.Negotiate(nil, nil)
-	if !ok {
 		t.Fatalf("unexpected, got: %v", ok)
 	}
 }
@@ -569,7 +547,7 @@ func TestRecover(t *testing.T) {
 
 			h := shouldRenderErr(t, c.expErr)
 			res := newResponse(w, r, nil, nil, []ErrorHook{h})
-			res.mustNegotiate(nil, nil)
+			res.Negotiate(nil, nil)
 
 			func() {
 				defer res.Recover()
@@ -586,15 +564,5 @@ func shouldRenderErr(t *testing.T, target error) func(error) interface{} {
 		}
 
 		return nil
-	}
-}
-
-// mustNegotiate makes tests that don't focus on negotiation more readable
-func (res *response) mustNegotiate(
-	decs []coding.Decoding,
-	encs []coding.Encoding) {
-	err := res.negotiate(decs, encs)
-	if err != nil {
-		panic(err)
 	}
 }

@@ -44,9 +44,16 @@ safe to consider to be server errors i guess).
 			 header like the std library
 - [x] SHOULD make it clear that the build-in error hook only creates outputs for
              ep.Error errors
+- [x] SHOULD should only show negotation errors when bind is actually called,
+             handlers might not even want to decode. I.e a static endpoint that
+             just returns a struct as output. AND:
+- [ ] SHOULD move negotiate to new response creation then
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 
+- [ ] COULD  add some (optional) reflect sparkles for creating the handle func
+             since the reflecting can be done out of the hot path. Maybe take
+             inspiration from the std lib rpc package
 - [ ] COULD  make the response.Render() method take variadic nr of interface{}
              arguments such that exec methods can return any nr of outputs.
              response.Bind() might also be able to bind more then one input.

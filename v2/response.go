@@ -11,7 +11,7 @@ import (
 // ResponseWriter extends the traditional http.ResponseWriter interface with
 // functionality that standardizes input decoding and output encoding.
 type ResponseWriter interface {
-	Negotiate([]coding.Decoding, []coding.Encoding) bool
+	Negotiate([]coding.Decoding, []coding.Encoding)
 	Bind(in interface{}) bool
 	Render(out interface{}, err error)
 	Recover()
@@ -31,6 +31,7 @@ type response struct {
 
 	encContentType  string
 	encNegotiateErr error
+	decNegotiateErr error
 	wroteHeader     bool
 	runningReqHooks bool
 	currentOutput   interface{}
@@ -61,31 +62,19 @@ func NewResponse(
 	resh []ResponseHook,
 	errh []ErrorHook,
 ) ResponseWriter {
-	return newResponse(w, r, reqh, resh, errh)
+	res := newResponse(w, r, reqh, resh, errh)
+	return res
 }
 
 // Negotiate which encoding and decoding will be used for binding and rendering
 func (res *response) Negotiate(
 	decs []coding.Decoding,
 	encs []coding.Encoding,
-) bool {
-	err := res.negotiate(decs, encs)
-	if err != nil {
-		res.Render(nil, err)
-		return false
-	}
+) {
 
-	return true
-}
-
-func (res *response) negotiate(
-	decs []coding.Decoding,
-	encs []coding.Encoding,
-) (err error) {
-	res.dec, err = negotiateDecoder(res.req, decs)
-	if err != nil {
-		return err
-	}
+	// any failure to negotiate is only important if we actually wanna decode
+	// something during a call to bind
+	res.dec, res.decNegotiateErr = negotiateDecoder(res.req, decs)
 
 	// Failing to negotiate an encoder is only important when we know for sure
 	// that it will be used during a call to render. The user might decide to
@@ -155,6 +144,10 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 		}
 	}
 
+	if res.decNegotiateErr != nil {
+		return false, res.decNegotiateErr
+	}
+
 	if res.dec == nil {
 		return false, nil
 	}
@@ -194,7 +187,7 @@ func (res *response) render(v interface{}) (err error) {
 		// we log this situation to the default logger so the user knows
 		// whats going on.
 		if len(res.errHooks) < 1 {
-			log.Printf("ep: no error hooks for rendering error: %v", errv)
+			log.Printf("ep: no error hooks to render error: %v", errv)
 		}
 
 		// Error hooks are responsible for turning any error into an output

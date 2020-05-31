@@ -9,6 +9,7 @@ type ErrorKind uint8
 const (
 	OtherError        ErrorKind = iota
 	ServerError                 // unexpected server condition
+	EmptyRequestError           // Empty request encountered
 	UnacceptableError           // no encoder supports what the client accepts
 	UnsupportedError            // no decoder supports the content type sent by the client
 	RequestHookError            // request hook failed to run

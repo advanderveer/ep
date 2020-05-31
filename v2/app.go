@@ -31,8 +31,7 @@ func (a *App) Handle(h func(ResponseWriter, *http.Request)) http.Handler {
 		res := NewResponse(w, r, a.reqHooks, a.resHooks, a.errHooks)
 		defer res.Recover()
 
-		if res.Negotiate(a.decodings, a.encodings) {
-			h(res, r)
-		}
+		res.Negotiate(a.decodings, a.encodings)
+		h(res, r)
 	})
 }

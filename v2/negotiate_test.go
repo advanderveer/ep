@@ -67,35 +67,36 @@ func TestNegotiateResponseEncoder(t *testing.T) {
 
 func TestNegotiateRequestDecoder(t *testing.T) {
 	for i, c := range []struct {
-		method string
 		body   string
 		ct     string
 		decs   []coding.Decoding
 		expDec coding.Decoder
 		expErr error
 	}{
-		{"GET", "{}", "application/json", nil, nil, nil},
-		{"POST", "", "application/json", nil, nil, nil},
 		{
-			"POST", "{}", "application/json ; charset=UTF-8", nil, nil,
+			"", "application/json", nil, nil,
+			Err(Op("negotiateDecoder"), EmptyRequestError),
+		},
+		{
+			"{}", "application/json ; charset=UTF-8", nil, nil,
 			Err(Op("negotiateDecoder"), UnsupportedError),
 		},
 		{
-			"POST", "{}", "foo/bar ; charset=UTF-8",
+			"{}", "foo/bar ; charset=UTF-8",
 			[]coding.Decoding{coding.JSON{}}, nil,
 			Err(Op("negotiateDecoder"), UnsupportedError),
 		},
 		{
-			"POST", "{}", "application/json ; charset=UTF-8",
+			"{}", "application/json ; charset=UTF-8",
 			[]coding.Decoding{coding.JSON{}}, &json.Decoder{}, nil,
 		},
 		{
-			"POST", " {", "",
+			" {", "",
 			[]coding.Decoding{coding.JSON{}}, &json.Decoder{}, nil,
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			r := httptest.NewRequest(c.method, "/", strings.NewReader(c.body))
+			r := httptest.NewRequest("POST", "/", strings.NewReader(c.body))
 			if c.ct != "" {
 				r.Header.Set("Content-Type", c.ct)
 			}
