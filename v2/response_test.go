@@ -57,8 +57,7 @@ func TestNegotiate(t *testing.T) {
 			w := httptest.NewRecorder()
 			a := New(c.opts...)
 
-			res := newResponse(w, r, a.reqHooks, a.resHooks, a.errHooks)
-			res.Negotiate(a.decodings, a.encodings)
+			res := newResponse(w, r, a.reqHooks, a.resHooks, a.errHooks, a.decodings, a.encodings)
 			if !errors.Is(res.decNegotiateErr, c.expErr) {
 				t.Fatalf("expected error %#v, got: %#v", c.expErr, res.decNegotiateErr)
 			}
@@ -160,7 +159,7 @@ func TestResponseWriting(t *testing.T) {
 				hooks = append(hooks, c.hook)
 			}
 
-			res := newResponse(w, r, nil, hooks, nil)
+			res := newResponse(w, r, nil, hooks, nil, nil, nil)
 
 			n, err := res.Write([]byte(c.write))
 			if len(c.write) != n {
@@ -198,7 +197,7 @@ func TestMultipleWriteHeaderWithHooks(t *testing.T) {
 
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
-	res := newResponse(w, r, nil, []ResponseHook{hook}, nil)
+	res := newResponse(w, r, nil, []ResponseHook{hook}, nil, nil, nil)
 
 	res.WriteHeader(404)
 	res.WriteHeader(405)
@@ -293,8 +292,7 @@ func TestPrivateRender(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 			w := httptest.NewRecorder()
 
-			res := newResponse(w, r, nil, nil, c.hooks)
-			res.Negotiate(nil, c.encs)
+			res := newResponse(w, r, nil, nil, c.hooks, nil, c.encs)
 
 			err := res.render(c.out)
 			if !errors.Is(err, c.expErr) {
@@ -330,10 +328,10 @@ func TestRenderWithNilEncoderAndNoError(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 
-	res := newResponse(w, r, nil, nil, nil)
+	res := newResponse(w, r, nil, nil, nil, nil, nil)
 
 	err := res.render("foo")
-	if !errors.Is(err, Err(Op("response.render"), ServerError)) {
+	if !errors.Is(err, Err(Op("negotiateEncoder"), ServerError)) {
 		t.Fatalf("expected error, got: %#v", err)
 	}
 }
@@ -341,8 +339,7 @@ func TestRenderWithNilEncoderAndNoError(t *testing.T) {
 func TestPrivateRenderSequentially(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
-	res := newResponse(w, r, nil, nil, nil)
-	res.Negotiate(nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, nil, nil, nil, []coding.Encoding{coding.JSON{}})
 
 	err := res.render("foo")
 	if err != nil {
@@ -399,8 +396,7 @@ func TestPrivateBind(t *testing.T) {
 			r := httptest.NewRequest(c.method, "/", strings.NewReader(c.body))
 			w := httptest.NewRecorder()
 
-			res := newResponse(w, r, c.hooks, nil, nil)
-			res.Negotiate(c.decs, nil)
+			res := newResponse(w, r, c.hooks, nil, nil, c.decs, nil)
 
 			ok, err := res.bind(c.in)
 			if !errors.Is(err, c.expErr) {
@@ -428,8 +424,7 @@ func TestPrivateBindSequential(t *testing.T) {
 		return nil
 	}
 
-	res := newResponse(w, r, []RequestHook{hook1}, nil, nil)
-	res.Negotiate([]coding.Decoding{coding.JSON{}}, nil)
+	res := newResponse(w, r, []RequestHook{hook1}, nil, nil, []coding.Decoding{coding.JSON{}}, nil)
 
 	for i := 0; i < 100; i++ {
 		var in struct{ Foo string }
@@ -471,8 +466,7 @@ func TestRenderErrorPrecedence(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	h := shouldRenderErr(t, e)
-	res := newResponse(w, r, nil, nil, []ErrorHook{h})
-	res.Negotiate(nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, []coding.Encoding{coding.JSON{}})
 
 	res.Render(struct{}{}, e)
 }
@@ -492,8 +486,7 @@ func TestRenderDoublePassPanic(t *testing.T) {
 
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
-	res := newResponse(w, r, nil, nil, []ErrorHook{hook})
-	res.Negotiate(nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, nil, []ErrorHook{hook}, nil, []coding.Encoding{coding.JSON{}})
 
 	res.Render(make(chan struct{}), nil)
 }
@@ -502,8 +495,7 @@ func TestBindSuccess(t *testing.T) {
 	r := httptest.NewRequest("POST", "/", strings.NewReader(`{"Foo": "bar"}`))
 	w := httptest.NewRecorder()
 
-	res := newResponse(w, r, nil, nil, nil)
-	res.Negotiate([]coding.Decoding{coding.JSON{}}, nil)
+	res := newResponse(w, r, nil, nil, nil, []coding.Decoding{coding.JSON{}}, nil)
 
 	var in struct{ Foo string }
 	ok := res.Bind(&in)
@@ -521,8 +513,7 @@ func TestBindError(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	h := shouldRenderErr(t, Err(Op("response.bind")))
-	res := newResponse(w, r, nil, nil, []ErrorHook{h})
-	res.Negotiate([]coding.Decoding{coding.JSON{}}, nil)
+	res := newResponse(w, r, nil, nil, []ErrorHook{h}, []coding.Decoding{coding.JSON{}}, nil)
 
 	ok := res.Bind(struct{}{})
 	if ok {
@@ -546,8 +537,7 @@ func TestRecover(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			h := shouldRenderErr(t, c.expErr)
-			res := newResponse(w, r, nil, nil, []ErrorHook{h})
-			res.Negotiate(nil, nil)
+			res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, nil)
 
 			func() {
 				defer res.Recover()

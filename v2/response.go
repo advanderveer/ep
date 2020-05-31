@@ -11,7 +11,6 @@ import (
 // ResponseWriter extends the traditional http.ResponseWriter interface with
 // functionality that standardizes input decoding and output encoding.
 type ResponseWriter interface {
-	Negotiate([]coding.Decoding, []coding.Encoding)
 	Bind(in interface{}) bool
 	Render(out interface{}, err error)
 	Recover()
@@ -43,8 +42,11 @@ func newResponse(
 	reqh []RequestHook,
 	resh []ResponseHook,
 	errh []ErrorHook,
+
+	decs []coding.Decoding,
+	encs []coding.Encoding,
 ) *response {
-	return &response{
+	res := &response{
 		ResponseWriter: w,
 		req:            r,
 
@@ -52,25 +54,6 @@ func newResponse(
 		resHooks: resh,
 		errHooks: errh,
 	}
-}
-
-// NewResponse initializes a ResponseWriter
-func NewResponse(
-	w http.ResponseWriter,
-	r *http.Request,
-	reqh []RequestHook,
-	resh []ResponseHook,
-	errh []ErrorHook,
-) ResponseWriter {
-	res := newResponse(w, r, reqh, resh, errh)
-	return res
-}
-
-// Negotiate which encoding and decoding will be used for binding and rendering
-func (res *response) Negotiate(
-	decs []coding.Decoding,
-	encs []coding.Encoding,
-) {
 
 	// any failure to negotiate is only important if we actually wanna decode
 	// something during a call to bind
@@ -81,7 +64,20 @@ func (res *response) Negotiate(
 	// write to the response itself, or the API doesn't need encoding at all.
 	// So we keep the error in the response to be reported later.
 	res.enc, res.encContentType, res.encNegotiateErr = negotiateEncoder(res.req, res, encs)
-	return
+	return res
+}
+
+// NewResponse initializes a ResponseWriter
+func NewResponse(
+	w http.ResponseWriter,
+	r *http.Request,
+	reqh []RequestHook,
+	resh []ResponseHook,
+	errh []ErrorHook,
+	decs []coding.Decoding,
+	encs []coding.Encoding,
+) ResponseWriter {
+	return newResponse(w, r, reqh, resh, errh, decs, encs)
 }
 
 // Write some data to the response body. If the header was not yet written this

@@ -28,10 +28,8 @@ func New(opts ...Option) (app *App) {
 // the application configuration.
 func (a *App) Handle(h func(ResponseWriter, *http.Request)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		res := NewResponse(w, r, a.reqHooks, a.resHooks, a.errHooks)
+		res := NewResponse(w, r, a.reqHooks, a.resHooks, a.errHooks, a.decodings, a.encodings)
 		defer res.Recover()
-
-		res.Negotiate(a.decodings, a.encodings)
 		h(res, r)
 	})
 }
