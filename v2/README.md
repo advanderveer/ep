@@ -68,6 +68,7 @@ variables in a GET request
              - Option 2: check for a method outside of response hooks
 - [x] SHOULD be able to bind empty body to allow the implementation to handle it
 - [x] SHOULD also allow Read() method on input that doesn't return error
+- [x] SHOULD write a basic rest example to test and apply v2
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 

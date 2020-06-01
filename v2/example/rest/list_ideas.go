@@ -14,7 +14,6 @@ func (h *handler) ListIdeas(
 	ctx context.Context,
 	in ListIdeasInput,
 ) (out ListIdeasOutput, err error) {
-
 	h.Lock()
 	defer h.Unlock()
 	out = make(ListIdeasOutput, 0, len(h.db))
@@ -25,7 +24,6 @@ func (h *handler) ListIdeas(
 
 		out = append(out, idea)
 	}
-
 	return
 }
 
@@ -35,4 +33,12 @@ func (in *ListIdeasInput) Read(r *http.Request) {
 
 func (out ListIdeasOutput) Empty() bool {
 	return out == nil || len(out) < 1
+}
+
+func (out ListIdeasOutput) Status() int {
+	if out.Empty() {
+		return 204
+	} else {
+		return 200
+	}
 }
