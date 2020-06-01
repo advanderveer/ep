@@ -52,6 +52,16 @@ safe to consider to be server errors i guess).
              should be able to just return an output themselves that implements
              the error interface
 - [x] SHOULD return 500 when a response hook panics with nil pointer
+- [x] SHOULD should be possible to prevent the body from being rendered, passing
+             nil is not the correct mechanism. But the actual output should still
+             be taken into account. Would be nice if it doesn't require a magic
+             variable from the ep package so it doesn't need to be included
+             everywhere.
+             - Option 1: use reflection to check for nil value in interface
+             	CON: Performance: +/-4ns
+             	CON: doesn't allow empty body when value is NOT nil
+             	PRO: usefull in preventing hooks calling on nil values
+             - Option 2: check for a method outside of response hooks
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 

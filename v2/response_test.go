@@ -207,6 +207,10 @@ func TestMultipleWriteHeaderWithHooks(t *testing.T) {
 	}
 }
 
+type emptyOutput struct{}
+
+func (_ emptyOutput) Empty() bool { return true }
+
 func TestPrivateRender(t *testing.T) {
 	hook1 := func(err error) (out interface{}) {
 		return struct {
@@ -232,6 +236,10 @@ func TestPrivateRender(t *testing.T) {
 		expLogs   string
 	}{
 		{
+			expCode: 200,
+		},
+		{
+			out:     emptyOutput{},
 			expCode: 200,
 		},
 		{
@@ -330,14 +338,15 @@ func TestPrivateRender(t *testing.T) {
 	}
 }
 
-func TestRenderWithNilEncoderAndNoError(t *testing.T) {
+func TestRenderWithDeliberateNilEncoder(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 
-	res := newResponse(w, r, nil, nil, nil, nil, nil)
+	res := newResponse(w, r, nil, nil, nil, nil, []coding.Encoding{coding.JSON{}})
+	res.enc = nil // this will cause the error we are looking to test
 
 	err := res.render("foo")
-	if !errors.Is(err, Err(Op("negotiateEncoder"), ServerError)) {
+	if !errors.Is(err, Err(Op("response.render"), ServerError)) {
 		t.Fatalf("expected error, got: %#v", err)
 	}
 }
@@ -523,6 +532,21 @@ func TestBindError(t *testing.T) {
 		[]coding.Decoding{coding.JSON{}}, []coding.Encoding{coding.JSON{}})
 
 	ok := res.Bind(struct{}{})
+	if ok {
+		t.Fatalf("unexpected, got: %v", ok)
+	}
+}
+
+func TestBindDeliberateNoDecoderError(t *testing.T) {
+	r := httptest.NewRequest("POST", "/", strings.NewReader(`{}`))
+	w := httptest.NewRecorder()
+
+	h := shouldRenderErr(t, Err(Op("response.bind"), ServerError))
+	res := newResponse(w, r, nil, nil, []ErrorHook{h},
+		[]coding.Decoding{coding.JSON{}}, []coding.Encoding{coding.JSON{}})
+	res.dec = nil //we deliberately set this to cause the no-encoder server error
+
+	ok := res.Bind(&struct{}{})
 	if ok {
 		t.Fatalf("unexpected, got: %v", ok)
 	}

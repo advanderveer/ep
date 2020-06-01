@@ -145,7 +145,7 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 	}
 
 	if res.dec == nil {
-		return false, nil
+		return false, Err(op, "no decoder to serialize non-empy request", ServerError)
 	}
 
 	err = res.dec.Decode(in)
@@ -197,11 +197,24 @@ func (res *response) render(v interface{}) (err error) {
 		}
 	}
 
-	// If the value turns out to be nil, we won't be needing any encoder but
-	// still wanna write the header.
-	if v == nil {
+	// WriteHeader needs access to the output value but the interface refrains
+	// us from passing it as an argument so we need to set it as an temporary
+	// struct member.
+	res.currentOutput = v
+	defer func() { res.currentOutput = nil }()
+
+	// If the value turns out to be nil or implements the Empty method, we won't
+	// be needing any encoder but still wanna write the header and call any
+	// response hooks.
+	switch vt := v.(type) {
+	case nil:
 		res.WriteHeader(http.StatusOK)
 		return nil
+	case interface{ Empty() bool }:
+		if vt.Empty() {
+			res.WriteHeader(http.StatusOK)
+			return nil
+		}
 	}
 
 	// We for sure have a value to encode, so if we had any issues with getting
@@ -209,12 +222,6 @@ func (res *response) render(v interface{}) (err error) {
 	if res.encNegotiateErr != nil {
 		return res.encNegotiateErr
 	}
-
-	// WriteHeader needs access to the output value but the interface refrains
-	// us from passing it as an argument so we need to set it as an temporary
-	// struct member.
-	res.currentOutput = v
-	defer func() { res.currentOutput = nil }()
 
 	// The encoder is nil without any enc negotiation error
 	if res.enc == nil {

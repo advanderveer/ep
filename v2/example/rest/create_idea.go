@@ -33,11 +33,11 @@ func (h *handler) CreateIdea(
 	return nil, nil
 }
 
-func (_ *CreateIdeaOutput) Head(h http.Header) {
-	h.Set("Location", "/ideas")
-}
+func (_ *CreateIdeaOutput) Head(h http.Header) { h.Set("Location", "/ideas") }
 
 func (_ *CreateIdeaOutput) Status() int { return 201 }
+
+func (_ *CreateIdeaOutput) Empty() bool { return true }
 
 func (in CreateIdeaInput) Validate() error {
 	if in.Name == "" {

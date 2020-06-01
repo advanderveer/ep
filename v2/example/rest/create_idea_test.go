@@ -12,10 +12,11 @@ func TestCreateIdea(t *testing.T) {
 		body    string
 		expCode int
 		expBody string
+		expLoc  string
 	}{
-		{"", 400, `{"message":"Bad Request"}` + "\n"},
-		{"{}", 422, `{"message":"Name is empty"}` + "\n"},
-		// {`{"name": "foo"}`, 201, `{"message":"Name is empty"}` + "\n"},
+		{"", 400, `{"message":"Bad Request"}` + "\n", ""},
+		{"{}", 422, `{"message":"Name is empty"}` + "\n", ""},
+		{`{"name": "foo"}`, 201, ``, "/ideas"},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()
@@ -28,6 +29,10 @@ func TestCreateIdea(t *testing.T) {
 
 			if w.Body.String() != c.expBody {
 				t.Fatalf("expected %s, got: %s", c.expBody, w.Body.String())
+			}
+
+			if w.Header().Get("Location") != c.expLoc {
+				t.Fatalf("expected %s, got: %s", c.expLoc, w.Header().Get("Location"))
 			}
 		})
 	}

@@ -55,5 +55,6 @@ func New() http.Handler {
 		ep.RequestDecoding(coding.JSON{}),
 		ep.ResponseEncoding(coding.JSON{}),
 		ep.ResponseHook(hook.Status),
+		ep.ResponseHook(hook.Head),
 	), db: make(map[string]interface{})}
 }
