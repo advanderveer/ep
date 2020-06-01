@@ -12,7 +12,7 @@ import (
 )
 
 type handler struct {
-	db  map[string]interface{}
+	db  map[string]map[string]string
 	app *ep.App
 	sync.Mutex
 }
@@ -56,7 +56,8 @@ func New() http.Handler {
 		ep.ResponseEncoding(coding.JSON{}),
 		ep.ResponseHook(hook.Status),
 		ep.ResponseHook(hook.Head),
-	), db: map[string]interface{}{
-		"existing": nil,
+		ep.RequestHook(hook.Read),
+	), db: map[string]map[string]string{
+		"existing": {"name": "existing"},
 	}}
 }

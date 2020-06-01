@@ -12,7 +12,8 @@ func TestListIdeas(t *testing.T) {
 		expCode int
 		expBody string
 	}{
-		{"", 200, ""},
+		{"", 200, `[{"name":"existing"}]` + "\n"},
+		{"?name=foo", 200, ``},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()

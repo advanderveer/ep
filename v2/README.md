@@ -67,6 +67,7 @@ variables in a GET request
              	PRO: usefull in preventing hooks calling on nil values
              - Option 2: check for a method outside of response hooks
 - [x] SHOULD be able to bind empty body to allow the implementation to handle it
+- [x] SHOULD also allow Read() method on input that doesn't return error
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 

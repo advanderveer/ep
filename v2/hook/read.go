@@ -8,6 +8,9 @@ func Read(r *http.Request, in interface{}) error {
 	switch outt := in.(type) {
 	case interface{ Read(*http.Request) error }:
 		return outt.Read(r)
+	case interface{ Read(*http.Request) }:
+		outt.Read(r)
+		return nil
 	}
 
 	return nil

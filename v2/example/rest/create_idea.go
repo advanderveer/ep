@@ -29,7 +29,7 @@ func (h *handler) CreateIdea(
 		return nil, ErrorOutput{409, "Idea already exists"}
 	}
 
-	h.db[in.Name] = struct{}{}
+	h.db[in.Name] = map[string]string{"name": in.Name}
 	return nil, nil
 }
 

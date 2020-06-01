@@ -20,6 +20,13 @@ func (_ input2) Read(r *http.Request) error {
 	return errors.New("foo")
 }
 
+type input3 struct{ Foo string }
+
+func (i *input3) Read(r *http.Request) {
+	i.Foo = r.Method
+	return
+}
+
 func TestReadHook(t *testing.T) {
 	t.Run("nil should be skipped", func(t *testing.T) {
 		err := Read(nil, nil) //no input should work fine
@@ -31,6 +38,19 @@ func TestReadHook(t *testing.T) {
 	t.Run("should have read method", func(t *testing.T) {
 		r := httptest.NewRequest("GET", "/", nil)
 		in := &input1{}
+		err := Read(r, in)
+		if err != nil {
+			t.Fatalf("failed to read, got: %v", err)
+		}
+
+		if in.Foo != "GET" {
+			t.Fatalf("unexpected, got: %v", in.Foo)
+		}
+	})
+
+	t.Run("should have read method", func(t *testing.T) {
+		r := httptest.NewRequest("GET", "/", nil)
+		in := &input3{}
 		err := Read(r, in)
 		if err != nil {
 			t.Fatalf("failed to read, got: %v", err)
