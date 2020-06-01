@@ -3,10 +3,14 @@ package rest
 import (
 	"context"
 	"errors"
+	"net/http"
 )
 
 type (
-	CreateIdeaInput  struct{ Name string }
+	CreateIdeaInput struct {
+		Name string `json:"name"`
+	}
+
 	CreateIdeaOutput struct{}
 )
 
@@ -16,21 +20,30 @@ func (h *handler) CreateIdea(
 ) (out *CreateIdeaOutput, err error) {
 	err = in.Validate()
 	if err != nil {
-		return nil, err
+		return nil, ErrorOutput{422, err.Error()}
 	}
 
-	// @TODO validate input
+	h.Lock()
+	defer h.Unlock()
+	if _, ok := h.db[in.Name]; ok {
+		return nil, ErrorOutput{409, "Idea already exist"}
+	}
 
-	// @TODO check if the idea doesn't exist yet
+	h.db[in.Name] = struct{}{}
 
-	// @TODO set actual idea
-
+	// @TODO return 201 created
 	return
 }
 
+func (_ CreateIdeaOutput) Head(h http.Header) {
+	h.Set("Location", "/ideas")
+}
+
+func (_ CreateIdeaOutput) Status() int { return 201 }
+
 func (in CreateIdeaInput) Validate() error {
 	if in.Name == "" {
-		return errors.New("name is empty")
+		return errors.New("Name is empty")
 	}
 
 	return nil

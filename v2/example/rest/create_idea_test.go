@@ -9,18 +9,26 @@ import (
 
 func TestCreateIdea(t *testing.T) {
 	for i, c := range []struct {
-		body string
+		body    string
+		expCode int
+		expBody string
 	}{
-		{}, // @TODO sending an empty body to an endpoint calls binds to an input should be an error
+		{"", 400, `{"message":"Bad Request"}` + "\n"},
+		{"{}", 422, `{"message":"Name is empty"}` + "\n"},
+		// {`{"name": "foo"}`, 201, `{"message":"Name is empty"}` + "\n"},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/idea", strings.NewReader(c.body))
 			New().ServeHTTP(w, r)
 
-			// @TODO should fail with 400, because of empty body
+			if w.Code != c.expCode {
+				t.Fatalf("expected %d, got: %d", c.expCode, w.Code)
+			}
 
-			println(w.Code, w.Body.String())
+			if w.Body.String() != c.expBody {
+				t.Fatalf("expected %s, got: %s", c.expBody, w.Body.String())
+			}
 		})
 	}
 }

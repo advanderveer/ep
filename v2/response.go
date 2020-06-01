@@ -188,19 +188,12 @@ func (res *response) render(v interface{}) (err error) {
 
 		// Error hooks are responsible for turning any error into an output
 		// that can be rendered by the encoder.
-		var foundErrOutput bool
+		// var foundErrOutput bool
 		for _, h := range res.errHooks {
 			if eout := h(errv); eout != nil {
 				v = eout
-				foundErrOutput = true
 				break
 			}
-		}
-
-		// If no output was delivered by the hooks, we set the value to nil
-		// so errors are not accidentaly encoded with sensitive information.
-		if !foundErrOutput {
-			v = nil
 		}
 	}
 
@@ -262,7 +255,7 @@ func (res *response) Recover() {
 	var perr error
 	switch rt := r.(type) {
 	case error:
-		perr = Err(Op("response.Recover"), ServerError, rt)
+		perr = Err(Op("response.Recover"), "error", ServerError, rt)
 	case string:
 		perr = Err(Op("response.Recover"), rt, ServerError)
 	default:

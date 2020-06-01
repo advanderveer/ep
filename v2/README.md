@@ -47,7 +47,11 @@ safe to consider to be server errors i guess).
 - [x] SHOULD should only show negotation errors when bind is actually called,
              handlers might not even want to decode. I.e a static endpoint that
              just returns a struct as output. AND:
-- [ ] SHOULD move negotiate to new response creation then
+- [x] SHOULD move negotiate to new response creation then
+- [x] SHOULD not set error to nil when hooks fail to deliver an output, users
+             should be able to just return an output themselves that implements
+             the error interface
+- [ ] SHOULD return 500 when a response hook panics with nil pointer
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 

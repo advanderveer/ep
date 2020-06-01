@@ -255,11 +255,17 @@ func TestPrivateRender(t *testing.T) {
 			expErr:  Err(Op("response.render"), EncoderError),
 			expCode: 200,
 		},
-		{ //without error hooks, the errors are logged to stdlogger
+		{ //without error hooks, the errors are logged to stdlogger and the error
+			// is encoded as is
 			out:     Err("my error"),
 			encs:    []coding.Encoding{coding.JSON{}},
 			expCode: 200,
 			expLogs: "my error",
+			expBody: "{}\n",
+			expHeader: http.Header{
+				"Content-Type":           {"application/json"},
+				"X-Content-Type-Options": {"nosniff"},
+			},
 		},
 		{ // following tests check that the first hook's result takes precedence
 			out:     Err("my error"),
@@ -513,7 +519,8 @@ func TestBindError(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	h := shouldRenderErr(t, Err(Op("response.bind")))
-	res := newResponse(w, r, nil, nil, []ErrorHook{h}, []coding.Decoding{coding.JSON{}}, nil)
+	res := newResponse(w, r, nil, nil, []ErrorHook{h},
+		[]coding.Decoding{coding.JSON{}}, []coding.Encoding{coding.JSON{}})
 
 	ok := res.Bind(struct{}{})
 	if ok {
@@ -537,7 +544,7 @@ func TestRecover(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			h := shouldRenderErr(t, c.expErr)
-			res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, nil)
+			res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, []coding.Encoding{coding.JSON{}})
 
 			func() {
 				defer res.Recover()
