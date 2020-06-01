@@ -100,6 +100,7 @@ func (res *response) WriteHeader(statusCode int) {
 
 	if !res.runningReqHooks {
 		res.runningReqHooks = true
+		defer func() { res.runningReqHooks = false }()
 		for _, h := range res.resHooks {
 			h(
 				res,
@@ -107,7 +108,6 @@ func (res *response) WriteHeader(statusCode int) {
 				res.currentOutput, // might be nil
 			)
 		}
-		res.runningReqHooks = false
 	}
 
 	// this check ensures that if any hooks called writeHeader we won't be

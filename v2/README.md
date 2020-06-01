@@ -51,7 +51,7 @@ safe to consider to be server errors i guess).
 - [x] SHOULD not set error to nil when hooks fail to deliver an output, users
              should be able to just return an output themselves that implements
              the error interface
-- [ ] SHOULD return 500 when a response hook panics with nil pointer
+- [x] SHOULD return 500 when a response hook panics with nil pointer
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 

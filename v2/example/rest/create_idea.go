@@ -30,16 +30,14 @@ func (h *handler) CreateIdea(
 	}
 
 	h.db[in.Name] = struct{}{}
-
-	// @TODO return 201 created
-	return
+	return nil, nil
 }
 
-func (_ CreateIdeaOutput) Head(h http.Header) {
+func (_ *CreateIdeaOutput) Head(h http.Header) {
 	h.Set("Location", "/ideas")
 }
 
-func (_ CreateIdeaOutput) Status() int { return 201 }
+func (_ *CreateIdeaOutput) Status() int { return 201 }
 
 func (in CreateIdeaInput) Validate() error {
 	if in.Name == "" {

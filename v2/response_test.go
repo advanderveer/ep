@@ -554,6 +554,32 @@ func TestRecover(t *testing.T) {
 	}
 }
 
+func TestPanicInResponseHook(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+
+	var panicedAlready bool
+	h := func(w http.ResponseWriter, r *http.Request, out interface{}) {
+		if !panicedAlready {
+			panicedAlready = true
+			panic("foo")
+		}
+	}
+
+	sh := shouldRenderErr(t, Err(Op("response.Recover")))
+	res := newResponse(w, r, nil, []ResponseHook{h}, []ErrorHook{sh}, nil, []coding.Encoding{coding.JSON{}})
+
+	func() {
+		defer res.Recover()
+		res.Render(nil, nil)
+	}()
+
+	if res.runningReqHooks == true {
+		t.Fatalf("should have reset runningReqHooks state, got: %v", res.runningReqHooks)
+	}
+
+}
+
 func shouldRenderErr(t *testing.T, target error) func(error) interface{} {
 	return func(err error) interface{} {
 		if !errors.Is(err, target) {
