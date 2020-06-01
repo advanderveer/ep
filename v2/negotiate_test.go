@@ -74,8 +74,7 @@ func TestNegotiateRequestDecoder(t *testing.T) {
 		expErr error
 	}{
 		{
-			"", "application/json", nil, nil,
-			Err(Op("negotiateDecoder"), EmptyRequestError),
+			"", "application/json", nil, nil, nil,
 		},
 		{
 			"{}", "application/json ; charset=UTF-8", nil, nil,

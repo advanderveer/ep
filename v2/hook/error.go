@@ -34,8 +34,6 @@ func NewStandardError(logs *log.Logger) func(err error) interface{} {
 			out.status = http.StatusUnsupportedMediaType
 		case errors.Is(eperr, ep.Err(ep.DecoderError)):
 			out.status = http.StatusBadRequest
-		case errors.Is(eperr, ep.Err(ep.EmptyRequestError)):
-			out.status = http.StatusBadRequest
 		}
 
 		out.Message = http.StatusText(out.status)

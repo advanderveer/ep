@@ -26,11 +26,19 @@ func (h *handler) CreateIdea(
 	h.Lock()
 	defer h.Unlock()
 	if _, ok := h.db[in.Name]; ok {
-		return nil, ErrorOutput{409, "Idea already exist"}
+		return nil, ErrorOutput{409, "Idea already exists"}
 	}
 
 	h.db[in.Name] = struct{}{}
 	return nil, nil
+}
+
+func (in *CreateIdeaInput) Validate() error {
+	if in.Name == "" {
+		return errors.New("Name is empty")
+	}
+
+	return nil
 }
 
 func (_ *CreateIdeaOutput) Head(h http.Header) { h.Set("Location", "/ideas") }
@@ -38,11 +46,3 @@ func (_ *CreateIdeaOutput) Head(h http.Header) { h.Set("Location", "/ideas") }
 func (_ *CreateIdeaOutput) Status() int { return 201 }
 
 func (_ *CreateIdeaOutput) Empty() bool { return true }
-
-func (in CreateIdeaInput) Validate() error {
-	if in.Name == "" {
-		return errors.New("Name is empty")
-	}
-
-	return nil
-}

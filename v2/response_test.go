@@ -31,7 +31,7 @@ func TestNegotiate(t *testing.T) {
 		expEncCT  string
 	}{
 		{
-			expErr:    Err(Op("negotiateDecoder"), EmptyRequestError),
+			expErr:    nil,
 			expEncErr: Err(Op("negotiateEncoder"), ServerError),
 		},
 		{
@@ -386,8 +386,12 @@ func TestPrivateBind(t *testing.T) {
 		expOK  bool
 		expIn  interface{}
 	}{
+		//empty request should bind as OK as it just means that the handler
+		//has to work with the zero value
+		{expOK: true},
 		{
-			expErr: Err(EmptyRequestError),
+			method: "POST", body: `{"Foo": "bar"}`,
+			expErr: Err(Op("negotiateDecoder"), UnsupportedError),
 		},
 		{
 			method: "POST", body: `{"Foo": "bar"}`,
@@ -532,21 +536,6 @@ func TestBindError(t *testing.T) {
 		[]coding.Decoding{coding.JSON{}}, []coding.Encoding{coding.JSON{}})
 
 	ok := res.Bind(struct{}{})
-	if ok {
-		t.Fatalf("unexpected, got: %v", ok)
-	}
-}
-
-func TestBindDeliberateNoDecoderError(t *testing.T) {
-	r := httptest.NewRequest("POST", "/", strings.NewReader(`{}`))
-	w := httptest.NewRecorder()
-
-	h := shouldRenderErr(t, Err(Op("response.bind"), ServerError))
-	res := newResponse(w, r, nil, nil, []ErrorHook{h},
-		[]coding.Decoding{coding.JSON{}}, []coding.Encoding{coding.JSON{}})
-	res.dec = nil //we deliberately set this to cause the no-encoder server error
-
-	ok := res.Bind(&struct{}{})
 	if ok {
 		t.Fatalf("unexpected, got: %v", ok)
 	}

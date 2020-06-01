@@ -14,9 +14,10 @@ func TestCreateIdea(t *testing.T) {
 		expBody string
 		expLoc  string
 	}{
-		{"", 400, `{"message":"Bad Request"}` + "\n", ""},
+		{"", 422, `{"message":"Name is empty"}` + "\n", ""},
 		{"{}", 422, `{"message":"Name is empty"}` + "\n", ""},
 		{`{"name": "foo"}`, 201, ``, "/ideas"},
+		{`{"name": "existing"}`, 409, `{"message":"Idea already exists"}` + "\n", ""},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()

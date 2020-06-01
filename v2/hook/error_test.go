@@ -36,7 +36,6 @@ func TestPrivateErrorWithResponseHookAndEncoding(t *testing.T) {
 
 		{coding.JSON{}, ep.Err("foo"), 500, `{"message":"Internal Server Error"}` + "\n"},
 		{coding.JSON{}, ep.Err(ep.DecoderError), 400, `{"message":"Bad Request"}` + "\n"},
-		{coding.JSON{}, ep.Err(ep.EmptyRequestError), 400, `{"message":"Bad Request"}` + "\n"},
 		{coding.JSON{}, ep.Err(ep.UnsupportedError), 415, `{"message":"Unsupported Media Type"}` + "\n"},
 		{coding.JSON{}, ep.Err(ep.UnacceptableError), 406, `{"message":"Not Acceptable"}` + "\n"},
 		{coding.XML{}, ep.Err(ep.UnacceptableError), 406, `<Error><Message>Not Acceptable</Message></Error>`},

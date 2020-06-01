@@ -46,7 +46,7 @@ func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, 
 	prc := Buffer(r.Body)
 	peek, _ := prc.Peek(512)
 	if len(peek) < 1 {
-		return nil, Err(op, "empty request body", EmptyRequestError)
+		return nil, nil
 	}
 
 	// Since we peeked, the original reader doesn't provide the ability to read

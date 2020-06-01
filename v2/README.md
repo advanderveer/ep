@@ -28,6 +28,10 @@ the Error() string interface). Does that work?
 The PrivateError hook only handles ep errors (and panics, which are always
 safe to consider to be server errors i guess). 
 
+## Handling empty requests
+
+- Bind might be called on a non-nil input that just wants to extract query
+variables in a GET request
 
 ## Backlog
 - [x] SHOULD be able to use error hooks to assert if errors are server, client or
@@ -62,6 +66,7 @@ safe to consider to be server errors i guess).
              	CON: doesn't allow empty body when value is NOT nil
              	PRO: usefull in preventing hooks calling on nil values
              - Option 2: check for a method outside of response hooks
+- [x] SHOULD be able to bind empty body to allow the implementation to handle it
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method
 

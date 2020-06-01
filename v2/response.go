@@ -145,14 +145,14 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 	}
 
 	if res.dec == nil {
-		return false, Err(op, "no decoder to serialize non-empy request", ServerError)
+		return true, nil
 	}
 
 	err = res.dec.Decode(in)
 	if err == io.EOF {
 		return false, nil
 	} else if err != nil {
-		return false, Err(op, "request body decoder failed", DecoderError)
+		return false, Err(op, "request body decoder failed", err, DecoderError)
 	}
 
 	return true, nil
