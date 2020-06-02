@@ -18,6 +18,7 @@ func TestRegister(t *testing.T) {
 	}{
 		{"GET", ``, "", 200, `form`, ""},
 		{"POST", `email=foo`, "application/x-www-form-urlencoded", 422, `forminvalid`, ""},
+		{"POST", `password=foo`, "application/x-www-form-urlencoded", 422, `forminvalid`, ""},
 		{"POST", `email=foo&password=bar`, "application/x-www-form-urlencoded", 301, ``, "/"},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
