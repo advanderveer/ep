@@ -28,10 +28,20 @@ the Error() string interface). Does that work?
 The PrivateError hook only handles ep errors (and panics, which are always
 safe to consider to be server errors i guess). 
 
-## Handling empty requests
+## Request Encoding negotiation
 
 - Bind might be called on a non-nil input that just wants to extract query
 variables in a GET request
+- Bind might be called with no decoders configured but decoding of the body done 
+with read methods on input structs
+- Take the approach of the standard lib, ParseForm only actually touches the
+body if a content-type is set. Then, what about sniffing?
+- Possibly allow input also to skip decoding with a method interface{}
+
+What is het meaning of calling bind to the developer. Is it just about decoding
+or about making sure the hooks are called. If the content-type is set, we attempt
+to find a decoder. But if we don't succeed, do we error?
+
 
 ## Backlog
 - [x] SHOULD be able to use error hooks to assert if errors are server, client or
@@ -69,9 +79,17 @@ variables in a GET request
 - [x] SHOULD be able to bind empty body to allow the implementation to handle it
 - [x] SHOULD also allow Read() method on input that doesn't return error
 - [x] SHOULD write a basic rest example to test and apply v2
+- [ ] SHOULD be able to use bind with a Read implementation that reads the body
+             and don't error with no-decoders
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
-             redirect method
+             redirect method. Redirect hook checks for a method to determine the
+             url to redirect to, and also asserts the status method on itself
+             or else takes a sensible redirect default
+             - But what if two hooks trigger writeHeader? The first one takes
+             precedense, so redirect hook should be put in front of 
+- [ ] SHOULD test the redirect hook in the rest example             
 
+- [ ] COULD  make a response hook that sets cookies
 - [ ] COULD  add some (optional) reflect sparkles for creating the handle func
              since the reflecting can be done out of the hot path. Maybe take
              inspiration from the std lib rpc package
