@@ -83,13 +83,13 @@ Should the framework be eager to decode, or not
 - [x] SHOULD be able to use bind with a Read implementation that reads the body
              and don't error with no-decoders
 - [x] SHOULD come up with a metter name for the Empty() method
-- [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
+- [x] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method. Redirect hook checks for a method to determine the
              url to redirect to, and also asserts the status method on itself
              or else takes a sensible redirect default
              - But what if two hooks trigger writeHeader? The first one takes
              precedense, so redirect hook should be put in front of 
-- [ ] SHOULD test the redirect hook in the rest example             
+- [x] SHOULD test the redirect hook in the rest example             
 
 - [ ] COULD  limit the header lenght used during negotiation so it doesn't 
              allow for DDOS attacks

@@ -14,10 +14,11 @@ func TestRegister(t *testing.T) {
 		ct      string
 		expCode int
 		expBody string
+		expLoc  string
 	}{
-		{"GET", ``, "", 200, `form`},
-		{"POST", `email=foo`, "application/x-www-form-urlencoded", 422, `forminvalid`},
-		{"POST", `email=foo&password=bar`, "application/x-www-form-urlencoded", 301, ``},
+		{"GET", ``, "", 200, `form`, ""},
+		{"POST", `email=foo`, "application/x-www-form-urlencoded", 422, `forminvalid`, ""},
+		{"POST", `email=foo&password=bar`, "application/x-www-form-urlencoded", 301, ``, "/"},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()
@@ -34,6 +35,10 @@ func TestRegister(t *testing.T) {
 
 			if w.Body.String() != c.expBody {
 				t.Fatalf("expected %s, got: %s", c.expBody, w.Body.String())
+			}
+
+			if w.Header().Get("Location") != c.expLoc {
+				t.Fatalf("expected %s, got: %s", c.expLoc, w.Header().Get("Location"))
 			}
 		})
 	}
