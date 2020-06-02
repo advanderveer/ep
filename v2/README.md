@@ -36,12 +36,13 @@ variables in a GET request
 with read methods on input structs
 - Take the approach of the standard lib, ParseForm only actually touches the
 body if a content-type is set. Then, what about sniffing?
-- Possibly allow input also to skip decoding with a method interface{}
+- Possibly allow input also to skip decoding with an Empty() method interface
 
 What is het meaning of calling bind to the developer. Is it just about decoding
 or about making sure the hooks are called. If the content-type is set, we attempt
 to find a decoder. But if we don't succeed, do we error?
 
+Should the framework be eager to decode, or not
 
 ## Backlog
 - [x] SHOULD be able to use error hooks to assert if errors are server, client or
@@ -79,8 +80,9 @@ to find a decoder. But if we don't succeed, do we error?
 - [x] SHOULD be able to bind empty body to allow the implementation to handle it
 - [x] SHOULD also allow Read() method on input that doesn't return error
 - [x] SHOULD write a basic rest example to test and apply v2
-- [ ] SHOULD be able to use bind with a Read implementation that reads the body
+- [x] SHOULD be able to use bind with a Read implementation that reads the body
              and don't error with no-decoders
+- [ ] SHOULD come up with a metter name for the Empty() method, more like skip
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method. Redirect hook checks for a method to determine the
              url to redirect to, and also asserts the status method on itself
@@ -89,6 +91,8 @@ to find a decoder. But if we don't succeed, do we error?
              precedense, so redirect hook should be put in front of 
 - [ ] SHOULD test the redirect hook in the rest example             
 
+- [ ] COULD  limit the header lenght used during negotiation so it doesn't 
+             allow for DDOS attacks
 - [ ] COULD  make a response hook that sets cookies
 - [ ] COULD  add some (optional) reflect sparkles for creating the handle func
              since the reflecting can be done out of the hot path. Maybe take

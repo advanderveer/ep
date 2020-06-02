@@ -371,6 +371,10 @@ func TestPrivateRenderSequentially(t *testing.T) {
 	}
 }
 
+type input1 struct{}
+
+func (_ input1) Empty() bool { return true }
+
 func TestPrivateBind(t *testing.T) {
 	errhook := func(r *http.Request, in interface{}) error {
 		return errors.New("foo")
@@ -390,13 +394,37 @@ func TestPrivateBind(t *testing.T) {
 		//has to work with the zero value
 		{expOK: true},
 		{
+			in:     nil,
 			method: "POST", body: `{"Foo": "bar"}`,
-			expErr: Err(Op("negotiateDecoder"), UnsupportedError),
+			expOK:  true,
+			expErr: nil, // because input is nil
 		},
 		{
+			in:     &struct{}{},
+			method: "POST", body: ``, // empty bodies are ignored without error
+			expOK:  true,
+			expErr: nil,
+			expIn:  &struct{}{},
+		},
+		{
+			in:     &input1{},
+			method: "POST", body: `{"Foo": "bar"}`,
+			expOK:  true,
+			expErr: nil, // because input has Empty() method
+			expIn:  &input1{},
+		},
+		{
+			in:     &struct{}{},
+			method: "POST", body: `{"Foo": "bar"}`,
+			expErr: Err(Op("negotiateDecoder"), UnsupportedError),
+			expIn:  &struct{}{},
+		},
+		{
+			in:     struct{}{}, // not a pointer so decoder fails
 			method: "POST", body: `{"Foo": "bar"}`,
 			decs:   []coding.Decoding{coding.JSON{}},
 			expErr: Err(Op("response.bind"), DecoderError),
+			expIn:  struct{}{},
 		},
 		{
 			in:     &struct{ Foo string }{},

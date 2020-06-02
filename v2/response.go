@@ -140,6 +140,16 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 		}
 	}
 
+	// if the input is nil or has an Empty() method we skip decoding
+	switch vt := in.(type) {
+	case nil:
+		return true, nil
+	case interface{ Empty() bool }:
+		if vt.Empty() {
+			return true, nil
+		}
+	}
+
 	if res.decNegotiateErr != nil {
 		return false, res.decNegotiateErr
 	}

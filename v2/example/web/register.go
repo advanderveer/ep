@@ -7,19 +7,13 @@ import (
 	"net/url"
 )
 
-var (
-	RegisterTmpl = template.Must(template.New("").Parse(`form{{ if .Validation }}invalid{{end}}`))
-)
-
 type (
 	Registration struct {
 		Email    string
 		Password string
 	}
 
-	RegisterInput struct {
-		*Registration
-	}
+	RegisterInput struct{ *Registration }
 
 	RegisterOutput struct {
 		RedirectTo string
@@ -36,13 +30,15 @@ func (h *handler) Register(
 	}
 
 	if out.Validation = in.Validate(); len(out.Validation) > 0 {
-		return // show validation feedback
+		return // show form with validation feedback
 	}
 
 	// success
 	out.RedirectTo = "/"
 	return
 }
+
+func (_ RegisterInput) Empty() bool { return true }
 
 func (in *RegisterInput) Read(r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -90,6 +86,9 @@ func (out RegisterOutput) Status() int {
 func (out RegisterOutput) Redirect() string {
 	return out.RedirectTo
 }
+
+var RegisterTmpl = template.Must(
+	template.New("").Parse(`form{{ if .Validation }}invalid{{end}}`))
 
 func (_ RegisterOutput) Template() *template.Template {
 	return RegisterTmpl

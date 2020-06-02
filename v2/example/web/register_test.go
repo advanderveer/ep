@@ -16,8 +16,8 @@ func TestRegister(t *testing.T) {
 		expBody string
 	}{
 		{"GET", ``, "", 200, `form`},
-		// {"POST", `email=foo`, "application/x-www-form-urlencoded", 422, `forminvalid`},
-		// {"POST", `email=foo&password=bar`, "application/x-www-form-urlencoded", 301, ``},
+		{"POST", `email=foo`, "application/x-www-form-urlencoded", 422, `forminvalid`},
+		{"POST", `email=foo&password=bar`, "application/x-www-form-urlencoded", 301, ``},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()

@@ -40,33 +40,29 @@ func detectContentType(b []byte) (ct string) {
 func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, error) {
 	const op Op = "negotiateDecoder"
 
-	// In order to sniff content and figuring out if there is any body with
-	// certainty we buffer the request body. If peek returns no bytes we
-	// know for sure the request is empty
-	prc := Buffer(r.Body)
-	peek, _ := prc.Peek(512)
-	if len(peek) < 1 {
-		return nil, nil
+	// If the request has a content-type it has explicitely indicated to have
+	// content and of a certain type. Else we sniff to make sure it's empty
+	ct := r.Header.Get("Content-Type")
+	if ct == "" {
+		prc := Buffer(r.Body)
+		peek, _ := prc.Peek(512)
+		if len(peek) < 1 {
+			return nil, nil // it's for sure empty. That's fine
+		}
+
+		r.Body = prc
+
+		// attempt to detect it
+		ct = detectContentType(peek)
 	}
 
-	// Since we peeked, the original reader doesn't provide the ability to read
-	// the body in full anymore, so we replace it with the buffered reader.
-	r.Body = prc
-
-	// At this point the server will be needing at least one decoding
+	// At this point we know the client really has sent something to us so if
+	// we can't handle it the negotiation fails
 	if len(decs) < 1 {
 		return nil, Err(op,
-			"relevant and non-empty request body but no decoders configured",
+			"client sent request body but no decoders configured",
 			UnsupportedError,
 		)
-	}
-
-	ct := detectContentType(peek)
-
-	// If the client specified an explicit content type, it takes precedence
-	// over the sniffed content type.
-	if r.Header.Get("Content-Type") != "" {
-		ct = r.Header.Get("Content-Type")
 	}
 
 	// Parse the content header, we only care about the value
@@ -82,7 +78,7 @@ func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, 
 	_, aski := accept.Negotiate(asks, []string{value})
 	if aski < 0 {
 		return nil, Err(op,
-			"relevant and non-empty request body no configured decoder accepts it",
+			"non-empty request body no configured decoder accepts it",
 			UnsupportedError,
 		)
 	}
