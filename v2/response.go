@@ -140,12 +140,12 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 		}
 	}
 
-	// if the input is nil or has an Empty() method we skip decoding
+	// if the input is nil or has an SkipDecode() method we skip decoding
 	switch vt := in.(type) {
 	case nil:
 		return true, nil
-	case interface{ Empty() bool }:
-		if vt.Empty() {
+	case interface{ SkipDecode() bool }:
+		if vt.SkipDecode() {
 			return true, nil
 		}
 	}
@@ -213,7 +213,7 @@ func (res *response) render(v interface{}) (err error) {
 	res.currentOutput = v
 	defer func() { res.currentOutput = nil }()
 
-	// If the value turns out to be nil or implements the Empty method, we won't
+	// If the value turns out to be nil or implements the Empty() method, we won't
 	// be needing any encoder but still wanna write the header and call any
 	// response hooks.
 	switch vt := v.(type) {

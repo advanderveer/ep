@@ -82,7 +82,7 @@ Should the framework be eager to decode, or not
 - [x] SHOULD write a basic rest example to test and apply v2
 - [x] SHOULD be able to use bind with a Read implementation that reads the body
              and don't error with no-decoders
-- [ ] SHOULD come up with a metter name for the Empty() method, more like skip
+- [x] SHOULD come up with a metter name for the Empty() method
 - [ ] SHOULD make sure that the redirect hook behaves identical to the std lib
              redirect method. Redirect hook checks for a method to determine the
              url to redirect to, and also asserts the status method on itself
@@ -114,6 +114,9 @@ Should the framework be eager to decode, or not
 - [ ] COULD  lift up the error kind when nesting errors
 - [ ] COULD  move the error to a separate package if it can fully replace the
              stdlib errors package
+- [ ] COULD  detect if decoding should happen for an input based on whether the
+             hooks have read data from the request body instead of checking a
+             magic method on the input.
 
 - [x] WONT   return text/plain if template encoder is specified a text template. 
              each encoder should only return one type of content, we only support

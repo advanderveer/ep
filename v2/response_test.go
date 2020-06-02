@@ -373,7 +373,7 @@ func TestPrivateRenderSequentially(t *testing.T) {
 
 type input1 struct{}
 
-func (_ input1) Empty() bool { return true }
+func (_ input1) SkipDecode() bool { return true }
 
 func TestPrivateBind(t *testing.T) {
 	errhook := func(r *http.Request, in interface{}) error {
@@ -410,7 +410,7 @@ func TestPrivateBind(t *testing.T) {
 			in:     &input1{},
 			method: "POST", body: `{"Foo": "bar"}`,
 			expOK:  true,
-			expErr: nil, // because input has Empty() method
+			expErr: nil, // because input has SkipDecode() method
 			expIn:  &input1{},
 		},
 		{

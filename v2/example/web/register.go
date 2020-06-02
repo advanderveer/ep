@@ -38,7 +38,9 @@ func (h *handler) Register(
 	return
 }
 
-func (_ RegisterInput) Empty() bool { return true }
+func (_ RegisterInput) SkipDecode() bool {
+	return true
+}
 
 func (in *RegisterInput) Read(r *http.Request) {
 	if r.Method != http.MethodPost {
