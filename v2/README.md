@@ -89,7 +89,9 @@ Should the framework be eager to decode, or not
              or else takes a sensible redirect default
              - But what if two hooks trigger writeHeader? The first one takes
              precedense, so redirect hook should be put in front of 
-- [x] SHOULD test the redirect hook in the rest example             
+- [x] SHOULD test the redirect hook in the rest example        
+- [ ] SHOULD test concurrent use of the callable     
+- [ ] SHOULD benchmark callable
 
 - [ ] COULD  limit the header lenght used during negotiation so it doesn't 
              allow for DDOS attacks
@@ -100,11 +102,9 @@ Should the framework be eager to decode, or not
 - [ ] COULD  allow xml/json/form/template encoder/decoder configuration with the
              option pattern or outputs implementing a certain interface. The 
              latter is more flexible
-- [ ] COULD  prevent hooks from calling interface methods if the value is nil and
-      		 causing a panic, requires reflect so maybe disable with a flag
 - [ ] COULD  use a default encoding when the client specifies an accept header
-      		 and none of the encoders match (the first configfured encoding
-      		 is always the default)
+             and none of the encoders match (the first configfured encoding is 
+             always the default)
 - [ ] COULD  lift up the error kind when nesting errors
 - [ ] COULD  move the error to a separate package if it can fully replace the
              stdlib errors package
@@ -122,15 +122,6 @@ Should the framework be eager to decode, or not
              html for now
 - [x] WONT   add a specific output that renders as nil, instead skipping encoding 
              instead have magic methods that are asserted.
-
-## Hook Usecases
-- [x] SHOULD have easy to use hook that allows output to set statuscode
-- [ ] SHOULD have a hook that can read mux params from the request
-- [ ] SHOULD have a hook that makes redirects easy
-- [ ] SHOULD support hook that supports query decoding of the url
-- [ ] SHOULD support a hook that make csrf tokens available to outputs (instead of through context)
-- [ ] SHOULD support a hook that adds a localizer to each output (instead of through context)
-- [ ] SHOULD support a hook that rewrites the session cookie on each response
-- [x] SHOULD have error hooks that does sensible defaults for error rendering
-		- but what to show for template render
-		- but only makes sense with status response hook
+- [x] WONT   prevent hooks from calling interface methods if the value is nil and
+             causing a panic, requires reflect so maybe disable with a flag. It's
+             up to the implementation to check if the value is nil
