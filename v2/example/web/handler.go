@@ -23,7 +23,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}).ServeHTTP(w, r)
 	default:
 		h.app.Handle(func(w ep.ResponseWriter, r *http.Request) {
-			w.Render(h.NotFound(), nil)
+			w.Render(h.NotFound())
 		}).ServeHTTP(w, r)
 	}
 }

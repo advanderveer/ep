@@ -12,7 +12,7 @@ import (
 // functionality that standardizes input decoding and output encoding.
 type ResponseWriter interface {
 	Bind(in interface{}) bool
-	Render(out interface{}, err error)
+	Render(outs ...interface{})
 	Recover()
 	http.ResponseWriter
 }
@@ -168,13 +168,23 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 	return true, nil
 }
 
-// Render will encode the output into the response body
-func (res *response) Render(out interface{}, err error) {
-	if err != nil {
-		out = err // error render takes precedence over
+// Render will encode the first non-nil argument into the response body. If any
+// of the arguments is an error, it takes precedence and is rendered instead.
+func (res *response) Render(outs ...interface{}) {
+	var out interface{}
+	for _, o := range outs {
+		switch o.(type) {
+		case nil:
+		case error:
+			out = o
+		default:
+			if out == nil {
+				out = o
+			}
+		}
 	}
 
-	err = res.render(out) // first pass
+	err := res.render(out) // first pass
 	if err != nil {
 		err = res.render(err) // second pass
 		if err != nil {

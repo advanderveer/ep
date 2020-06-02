@@ -97,12 +97,6 @@ Should the framework be eager to decode, or not
 - [ ] COULD  add some (optional) reflect sparkles for creating the handle func
              since the reflecting can be done out of the hot path. Maybe take
              inspiration from the std lib rpc package
-- [ ] COULD  make the response.Render() method take variadic nr of interface{}
-             arguments such that exec methods can return any nr of outputs.
-             response.Bind() might also be able to bind more then one input.
-             Might be usefull if the endpoint has a two distict outputs with
-             different templates and logic? Errors are already different outputs
-- [ ] COULD  add a specific output that renders as nil, instead skipping encoding 
 - [ ] COULD  allow xml/json/form/template encoder/decoder configuration with the
              option pattern or outputs implementing a certain interface. The 
              latter is more flexible
@@ -117,10 +111,17 @@ Should the framework be eager to decode, or not
 - [ ] COULD  detect if decoding should happen for an input based on whether the
              hooks have read data from the request body instead of checking a
              magic method on the input.
+- [x] COULD  make the response.Render() method take variadic nr of interface{}
+             arguments such that exec methods can return any nr of outputs.
+             response.Bind() might also be able to bind more then one input.
+             Might be usefull if the endpoint has a two distict outputs with
+             different templates and logic? Errors are already different outputs
 
 - [x] WONT   return text/plain if template encoder is specified a text template. 
              each encoder should only return one type of content, we only support
              html for now
+- [x] WONT   add a specific output that renders as nil, instead skipping encoding 
+             instead have magic methods that are asserted.
 
 ## Hook Usecases
 - [x] SHOULD have easy to use hook that allows output to set statuscode
