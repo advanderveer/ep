@@ -12,38 +12,6 @@ __Features:__
 - __Well tested__, benchmarked and depends only on the standard library
 - Supports __streaming__ requests and responses
 
-## Build-in Hooks
-Would be nice if ep comes with a hook that writes the status code based on a
-method that the output can implement. Support both `Head(h Header) int`
-or `Status() int`
-
-With that enabled, it is possible to create an error hook that comes with
-sensible defaults and logs to a provided logger. But how to support such a
-build-in error with the template encoder? Maybe allow returning a template
-itself. 
-
-How about allowing handlers to return outputs that are errors (implement 
-the Error() string interface). Does that work?
-
-The PrivateError hook only handles ep errors (and panics, which are always
-safe to consider to be server errors i guess). 
-
-## Request Encoding negotiation
-
-- Bind might be called on a non-nil input that just wants to extract query
-variables in a GET request
-- Bind might be called with no decoders configured but decoding of the body done 
-with read methods on input structs
-- Take the approach of the standard lib, ParseForm only actually touches the
-body if a content-type is set. Then, what about sniffing?
-- Possibly allow input also to skip decoding with an Empty() method interface
-
-What is het meaning of calling bind to the developer. Is it just about decoding
-or about making sure the hooks are called. If the content-type is set, we attempt
-to find a decoder. But if we don't succeed, do we error?
-
-Should the framework be eager to decode, or not
-
 ## Backlog
 - [x] SHOULD be able to use error hooks to assert if errors are server, client or
       		 something more specific and return relevant output
@@ -90,8 +58,8 @@ Should the framework be eager to decode, or not
              - But what if two hooks trigger writeHeader? The first one takes
              precedense, so redirect hook should be put in front of 
 - [x] SHOULD test the redirect hook in the rest example        
-- [ ] SHOULD test concurrent use of the callable     
-- [ ] SHOULD benchmark callable compared to non-reflection use
+- [x] SHOULD test concurrent use of the callable     
+- [x] SHOULD benchmark callable compared to non-reflection use
 - [ ] SHOULD properly do errors in callable logic
 
 - [ ] COULD  limit the header lenght used during negotiation so it doesn't 
