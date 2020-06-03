@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"testing"
 
-	ep "github.com/advanderveer/ep/v2"
-	"github.com/advanderveer/ep/v2/coding"
+	"github.com/advanderveer/ep"
+	"github.com/advanderveer/ep/coding"
 )
 
 func TestPrivateErrorLogs(t *testing.T) {

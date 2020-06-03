@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	ep "github.com/advanderveer/ep/v2"
+	"github.com/advanderveer/ep"
 )
 
 // NewStandardError creates an error hook for handling ep.Error errors. It logs

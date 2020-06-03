@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/advanderveer/ep/v2/coding"
+	"github.com/advanderveer/ep/coding"
 )
 
 // App holds application wide configuration for binding inputs and rendering

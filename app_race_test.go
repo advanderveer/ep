@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/advanderveer/ep/v2/coding"
+	"github.com/advanderveer/ep/coding"
 )
 
 func TestConcurrentAppHandling(t *testing.T) {

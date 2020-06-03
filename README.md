@@ -1,4 +1,4 @@
-# ep [![](https://godoc.org/github.com/advanderveer/ep?status.svg)](https://pkg.go.dev/github.com/advanderveer/ep?tab=doc)
+# ep
 A miniature Go(lang) framework for rapid development of [http.Handlers](https://pkg.go.dev/net/http?tab=doc#Handler) 
 while reducing code duplication and increasing readability. Designed to build 
 both APIs and regular web applications more efficiently while keeping the 
@@ -7,46 +7,102 @@ flexibility that is expected in the Go ecosystem.
 __Features:__
 
 - Works with __any HTTP router__ that accepts the http.Handler interface
-- Supports any library for __input validation__, both system-wide or customized per endpoint
-- Provides customizable __error handling__ for system errors and errors specific to your application
+- Systematic  __error handling__ for HTTP handlers with full customization options
 - Automatically encodes and decodes HTTP payloads using __content negotation__ 
-- Uses __language negotiation__ os your code can use best supported language for translations
 - __Well tested__, benchmarked and depends only on the standard library
-- Supports __streaming__ requests and responses
+- Supports __streaming__ requests and responses as a first-class citizen
 
-## Making error handling less unwieldy
-- Don't need a logger to see them
-- Don't need to create custom output
-- Don't need to setup a custom template with a specific name
+## Backlog V0.1
+- [x] SHOULD be able to use error hooks to assert if errors are server, client or
+      		 something more specific and return relevant output
+- [x] SHOULD allow request hooks to return an error that is both server, or client
+- [x] SHOULD handle panics in handlers as server errors
+- [x] SHOULD add and test xml encoding/decoding
+- [x] SHOULD add and test template encoding (text/html) and figure out how to
+      		 pass the template name to the encoder
+- [x] SHOULD add and test form decoding
+- [x] SHOULD allow outputs to specify template method that returns the template
+             type directly, not just the name
+- [x] SHOULD make sure that the PrivateError hook also sets the "nosniff"
+			 header like the std library
+- [x] SHOULD make it clear that the build-in error hook only creates outputs for
+             ep.Error errors
+- [x] SHOULD should only show negotation errors when bind is actually called,
+             handlers might not even want to decode. I.e a static endpoint that
+             just returns a struct as output. AND:
+- [x] SHOULD move negotiate to new response creation then
+- [x] SHOULD not set error to nil when hooks fail to deliver an output, users
+             should be able to just return an output themselves that implements
+             the error interface
+- [x] SHOULD return 500 when a response hook panics with nil pointer
+- [x] SHOULD should be possible to prevent the body from being rendered, passing
+             nil is not the correct mechanism. But the actual output should still
+             be taken into account. Would be nice if it doesn't require a magic
+             variable from the ep package so it doesn't need to be included
+             everywhere.
+             - Option 1: use reflection to check for nil value in interface
+             	CON: Performance: +/-4ns
+             	CON: doesn't allow empty body when value is NOT nil
+             	PRO: usefull in preventing hooks calling on nil values
+             - Option 2: check for a method outside of response hooks
+- [x] SHOULD be able to bind empty body to allow the implementation to handle it
+- [x] SHOULD also allow Read() method on input that doesn't return error
+- [x] SHOULD write a basic rest example to test and apply v2
+- [x] SHOULD be able to use bind with a Read implementation that reads the body
+             and don't error with no-decoders
+- [x] SHOULD come up with a metter name for the Empty() method
+- [x] SHOULD make sure that the redirect hook behaves identical to the std lib
+             redirect method. Redirect hook checks for a method to determine the
+             url to redirect to, and also asserts the status method on itself
+             or else takes a sensible redirect default
+             - But what if two hooks trigger writeHeader? The first one takes
+             precedense, so redirect hook should be put in front of 
+- [x] SHOULD test the redirect hook in the rest example        
+- [x] SHOULD test concurrent use of the callable     
+- [x] SHOULD benchmark callable compared to non-reflection use
+- [x] SHOULD properly do errors in callable logic
 
-The general premise is ok, the response will store any errors that it encounters
-during the response lifecycle and renders an output of it instead of the actual
-output. But having the different error types is confusing.
+- [ ] COULD  research if it is possible to reduce the nr of allocations when 
+             decoding and encoding. It adds about 14 more allocations compared
+             to the std lib variant. 
+- [ ] COULD  limit the header lenght used during negotiation so it doesn't 
+             allow for DDOS attacks
+- [ ] COULD  make a response hook that sets cookies
+- [ ] COULD  allow xml/json/form/template encoder/decoder configuration with the
+             option pattern or outputs implementing a certain interface. The 
+             latter is more flexible
+- [ ] COULD  use a default encoding when the client specifies an accept header
+             and none of the encoders match (the first configfured encoding is 
+             always the default)
+- [ ] COULD  lift up the error kind when nesting errors
+- [ ] COULD  move the error to a separate package if it can fully replace the
+             stdlib errors package
+- [ ] COULD  detect if decoding should happen for an input based on whether the
+             hooks have read data from the request body instead of checking a
+             magic method on the input.
+- [x] COULD  add some (optional) reflect sparkles for creating the handle func
+             since the reflecting can be done out of the hot path. Maybe take
+             inspiration from the std lib rpc package
+- [x] COULD  make the response.Render() method take variadic nr of interface{}
+             arguments such that exec methods can return any nr of outputs.
+             response.Bind() might also be able to bind more then one input.
+             Might be usefull if the endpoint has a two distict outputs with
+             different templates and logic? Errors are already different outputs
 
-- Maybe just one config that turns errors into outputs. Also handle panics?
-- Suitable for errors that are always handler wide: unexpected server errors and
-  client errors.
-- AppErrors are confusing, just for custom status code? Basically an utility to 
-  render an error output with a certain status code and message.
-- Question is, may the error returned from exec methods be used for rendering
-  "expected" errors, like 404 or 412? If so, an handler basically has two outputs
-  the "appError" output and the output type. That is confusing, it's probably
-  better if the main Output type would have a "error" embedded type and an 
-  "valid" embedded type, with optional rendering of it. The status would be
-  a function of that with hooks.
-- Question: what will be the default behaviour of the error handler func. Like
-  net/html it might just log to stderr by default. But what json/html would it
-  render?
-- What happens if the output doesn't have a template method? maybe configure the
-  template encoding with a default template so it doesn't crash with weird 
-  errors?
-- Or maybe just skip encoding by default?
+- [x] WONT   return text/plain if template encoder is specified a text template. 
+             each encoder should only return one type of content, we only support
+             html for now
+- [x] WONT   add a specific output that renders as nil, instead skipping encoding 
+             instead have magic methods that are asserted.
+- [x] WONT   prevent hooks from calling interface methods if the value is nil and
+             causing a panic, requires reflect so maybe disable with a flag. It's
+             up to the implementation to check if the value is nil
 
-## Backlog
+## Backlog V0.0
 - [x] MUST   get kitchen example back to work
 - [x] MUST   also add HTTP language negotiation
 - [x] MUST   output.Head and input.Check are now optional
-- [x] MUST 	 clean up the config and make config ergonomic 
+- [x] MUST   clean up the config and make config ergonomic 
 - [x] MUST   allow exec to return a InvalidInput error
 - [x] MUST   allow default configuration to be configured
 - [x] MUST   test file upload usecase
@@ -103,7 +159,7 @@ output. But having the different error types is confusing.
 - [x] COULD  make withEncoding and withHooks consistent in naming (one with s, other without)
 - [x] COULD  have package level doc summary for coding package
 - [ ] COULD  not get nil pointer if status created is embedded on a nil output struct. Instead, embedding 
-			 should trigger behaviour differently
+                   should trigger behaviour differently
 - [ ] COULD  use the configuration pattern as described here: https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
 - [ ] COULD  turn most of the coding tests into table tests
 - [ ] COULD  provide tooling to make endpoints extremely easy to test

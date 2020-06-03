@@ -12,13 +12,10 @@ function print_help {
 }
 
 function run_test { # test the codebase
-	go test -covermode=count -coverprofile=/tmp/cover \
-		./ \
-		./coding \
-		./accept \
+	go test -covermode=count -coverprofile=/tmp/cover ./... \
 		&& go tool cover -html=/tmp/cover 
 
-	go test -race -test.run=TestServerHandling
+	go test -race ./...
 	go test -test.bench=.* -benchmem
 }
 

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"net/http"
 
-	"github.com/advanderveer/ep/v2/accept"
-	"github.com/advanderveer/ep/v2/coding"
+	"github.com/advanderveer/ep/accept"
+	"github.com/advanderveer/ep/coding"
 )
 
 // detectContentType attempt to guess the content type by looking at the

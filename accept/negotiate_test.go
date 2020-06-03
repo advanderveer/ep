@@ -1,95 +1,90 @@
-// Copyright 2013 The Go Authors. All rights reserved.
-//
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file or at
-// https://developers.google.com/open-source/licenses/bsd.
-
 package accept
 
 import (
-	"net/http"
 	"testing"
 )
 
 var negotiateAcceptTest = []struct {
-	s            string
-	offers       []string
-	defaultOffer string
-	expect       string
+	asks             []string
+	offers           []string
+	expect           int
+	expectMatchedAsk int
 }{
-	{"text/html, */*;q=0", []string{"x/y"}, "", ""},
-	{"text/html, */*", []string{"x/y"}, "", "x/y"},
-	{"text/html, image/png", []string{"text/html", "image/png"}, "", "text/html"},
-	{"text/html, image/png", []string{"image/png", "text/html"}, "", "image/png"},
-	{"text/html, image/png; q=0.5", []string{"image/png"}, "", "image/png"},
-	{"text/html, image/png; q=0.5", []string{"text/html"}, "", "text/html"},
-	{"text/html, image/png; q=0.5", []string{"foo/bar"}, "", ""},
-	{"text/html, image/png; q=0.5", []string{"image/png", "text/html"}, "", "text/html"},
-	{"text/html, image/png; q=0.5", []string{"text/html", "image/png"}, "", "text/html"},
-	{"text/html;q=0.5, image/png", []string{"image/png"}, "", "image/png"},
-	{"text/html;q=0.5, image/png", []string{"text/html"}, "", "text/html"},
-	{"text/html;q=0.5, image/png", []string{"image/png", "text/html"}, "", "image/png"},
-	{"text/html;q=0.5, image/png", []string{"text/html", "image/png"}, "", "image/png"},
-	{"image/png, image/*;q=0.5", []string{"image/jpg", "image/png"}, "", "image/png"},
-	{"image/png, image/*;q=0.5", []string{"image/jpg"}, "", "image/jpg"},
-	{"image/png, image/*;q=0.5", []string{"image/jpg", "image/gif"}, "", "image/jpg"},
-	{"image/png, image/*", []string{"image/jpg", "image/gif"}, "", "image/jpg"},
-	{"image/png, image/*", []string{"image/gif", "image/jpg"}, "", "image/gif"},
-	{"image/png, image/*", []string{"image/gif", "image/png"}, "", "image/png"},
-	{"image/png, image/*", []string{"image/png", "image/gif"}, "", "image/png"},
+	{[]string{"text/html, */*;q=0"}, []string{"x/y"}, -1, -1},
+	{[]string{"text/html, */*"}, []string{"x/y"}, 0, 0},
+	{[]string{"text/html, image/png"}, []string{"text/html", "image/png"}, 0, 0},
+	{[]string{"text/html, image/png"}, []string{"image/png", "text/html"}, 0, 0},
+	{[]string{"text/html, image/png; q=0.5"}, []string{"image/png"}, 0, 0},
+	{[]string{"text/html, image/png; q=0.5"}, []string{"text/html"}, 0, 0},
+	{[]string{"text/html, image/png; q=0.5"}, []string{"foo/bar"}, -1, -1},
+	{[]string{"text/html, image/png; q=0.5"}, []string{"image/png", "text/html"}, 1, 0},
+	{[]string{"text/html, image/png; q=0.5"}, []string{"text/html", "image/png"}, 0, 0},
+	{[]string{"text/html;q=0.5, image/png"}, []string{"image/png"}, 0, 0},
+	{[]string{"text/html;q=0.5, image/png"}, []string{"text/html"}, 0, 0},
+	{[]string{"text/html;q=0.5, image/png"}, []string{"image/png", "text/html"}, 0, 0},
+	{[]string{"text/html;q=0.5, image/png"}, []string{"text/html", "image/png"}, 1, 0},
+	{[]string{"image/png, image/*;q=0.5"}, []string{"image/jpg", "image/png"}, 1, 0},
+	{[]string{"image/png, image/*;q=0.5"}, []string{"image/jpg"}, 0, 0},
+	{[]string{"image/png, image/*;q=0.5"}, []string{"image/jpg", "image/gif"}, 0, 0},
+	{[]string{"image/png, image/*"}, []string{"image/jpg", "image/gif"}, 0, 0},
+	{[]string{"image/png, image/*"}, []string{"image/gif", "image/jpg"}, 0, 0},
+	{[]string{"image/png, image/*"}, []string{"image/gif", "image/png"}, 1, 0},
+	{[]string{"image/png, image/*"}, []string{"image/png", "image/gif"}, 0, 0},
+	{[]string{"image/*", "image/png"}, []string{"image/png", "image/gif"}, 0, 1},
+	{[]string{"text/html;q=0.5", "image/png"}, []string{"text/html", "image/png"}, 1, 1},
 }
 
 func TestAcceptNegotiate(t *testing.T) {
 	for _, tt := range negotiateAcceptTest {
-		r := &http.Request{Header: http.Header{"Accept": {tt.s}}}
-		actual := Negotiate("Accept", r.Header, tt.offers, tt.defaultOffer)
+		actual, matchedAsk := Negotiate(tt.asks, tt.offers)
 		if actual != tt.expect {
-			t.Errorf("NegotiateAccept(%q, %#v, %q)=%q, want %q", tt.s, tt.offers, tt.defaultOffer, actual, tt.expect)
+			t.Errorf("NegotiateAccept(%v, %#v)=%q, want %q", tt.asks, tt.offers, actual, tt.expect)
 		}
+
+		if matchedAsk != tt.expectMatchedAsk {
+			t.Errorf("Expected matchedAsk to be %d, got: %d", tt.expectMatchedAsk, matchedAsk)
+		}
+
 	}
 }
 
 var negotiateLanguageTests = []struct {
-	s            string
-	offers       []string
-	defaultOffer string
-	expect       string
+	s      string
+	offers []string
+	expect int
 }{
-	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"xy-YX"}, "", ""},
-	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"en-GB"}, "", "en-GB"},
-	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"nl"}, "", "nl"},
-	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"xy"}, "default", "default"},
-	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"en-US", "en-GB"}, "", "en-GB"},
-	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"it", "nl", "en-US"}, "", "en-US"},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"xy-YX"}, -1},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"en-GB"}, 0},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"nl"}, 0},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"xy"}, -1},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"en-US", "en-GB"}, 1},
+	{"en-GB,en;q=0.9,en-US;q=0.8,nl;q=0.7,it;q=0.6", []string{"it", "nl", "en-US"}, 2},
 }
 
 func TestLanguageNegotiate(t *testing.T) {
 	for _, tt := range negotiateLanguageTests {
-		r := &http.Request{Header: http.Header{"Accept-Language": {tt.s}}}
-		actual := Negotiate("Accept-Language", r.Header, tt.offers, tt.defaultOffer)
+		actual, _ := Negotiate([]string{tt.s}, tt.offers)
 		if actual != tt.expect {
-			t.Errorf("NegotiateLanguage(%q, %#v, %q)=%q, want %q", tt.s, tt.offers, tt.defaultOffer, actual, tt.expect)
+			t.Errorf("NegotiateLanguage(%q, %#v)=%q, want %q", tt.s, tt.offers, actual, tt.expect)
 		}
 	}
 }
 
 var negotiateEncodingTests = []struct {
-	s            string
-	offers       []string
-	defaultOffer string
-	expect       string
+	s      string
+	offers []string
+	expect int
 }{
-	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"xy-YX"}, "", ""},
-	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"bogus", "gzip"}, "", "gzip"},
-	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"br", "gzip"}, "", "br"},
+	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"xy-YX"}, -1},
+	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"bogus", "gzip"}, 1},
+	{"br;q=1.0, gzip;q=0.8, *;q=0.1", []string{"br", "gzip"}, 0},
 }
 
 func TestEncodingNegotiate(t *testing.T) {
 	for _, tt := range negotiateEncodingTests {
-		r := &http.Request{Header: http.Header{"Accept-Encoding": {tt.s}}}
-		actual := Negotiate("Accept-Encoding", r.Header, tt.offers, tt.defaultOffer)
+		actual, _ := Negotiate([]string{tt.s}, tt.offers)
 		if actual != tt.expect {
-			t.Errorf("NegotiateLanguage(%q, %#v, %q)=%q, want %q", tt.s, tt.offers, tt.defaultOffer, actual, tt.expect)
+			t.Errorf("NegotiateLanguage(%q, %#v)=%q, want %q", tt.s, tt.offers, actual, tt.expect)
 		}
 	}
 }

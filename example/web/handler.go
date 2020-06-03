@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/advanderveer/ep/v2"
-	"github.com/advanderveer/ep/v2/coding"
-	"github.com/advanderveer/ep/v2/hook"
+	"github.com/advanderveer/ep"
+	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/hook"
 )
 
 type handler struct{ app *ep.App }

@@ -3,7 +3,7 @@ package ep
 import (
 	"net/http"
 
-	"github.com/advanderveer/ep/v2/coding"
+	"github.com/advanderveer/ep/coding"
 )
 
 // Option configures the app
