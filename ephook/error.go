@@ -41,7 +41,9 @@ func NewStandardError(logs *log.Logger) func(err error) interface{} {
 	}
 }
 
-var errorTemplate = template.Must(template.New("").Parse(`{{.Message}}`))
+var errorTemplate = template.Must(template.New("").Parse(
+	`<!doctype html><html lang="en"><head><title>{{.Message}}</title></head><body>{{.Message}}</body></html>`,
+))
 
 type errorOutput struct {
 	status int

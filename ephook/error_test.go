@@ -39,7 +39,7 @@ func TestPrivateErrorWithResponseHookAndEncoding(t *testing.T) {
 		{epcoding.JSON{}, ep.Err(ep.UnsupportedError), 415, `{"message":"Unsupported Media Type"}` + "\n"},
 		{epcoding.JSON{}, ep.Err(ep.UnacceptableError), 406, `{"message":"Not Acceptable"}` + "\n"},
 		{epcoding.XML{}, ep.Err(ep.UnacceptableError), 406, `<Error><Message>Not Acceptable</Message></Error>`},
-		{epcoding.NewHTML(nil), ep.Err(ep.UnacceptableError), 406, `Not Acceptable`},
+		{epcoding.NewHTML(nil), ep.Err(ep.UnacceptableError), 406, `<!doctype html><html lang="en"><head><title>Not Acceptable</title></head><body>Not Acceptable</body></html>`},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()
