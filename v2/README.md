@@ -60,7 +60,7 @@ __Features:__
 - [x] SHOULD test the redirect hook in the rest example        
 - [x] SHOULD test concurrent use of the callable     
 - [x] SHOULD benchmark callable compared to non-reflection use
-- [ ] SHOULD properly do errors in callable logic
+- [x] SHOULD properly do errors in callable logic
 
 - [ ] COULD  limit the header lenght used during negotiation so it doesn't 
              allow for DDOS attacks

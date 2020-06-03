@@ -18,14 +18,14 @@ func TestNewCallable(t *testing.T) {
 		expErr error
 		expTyp reflect.Type
 	}{
-		{nil, Err("not a func"), nil},
+		{nil, Err(Op("newCallable"), "argument is not a function"), nil},
 		{func() {}, nil, nil},
 		{func(string) {}, nil, reflect.TypeOf("")},
 		{func(context.Context) {}, nil, nil},
-		{func(u, v string) {}, Err("first must be ctx"), nil},
+		{func(u, v string) {}, Err(Op("newCallable"), "function's first argument must implement context.Context"), nil},
 		{func(myCtx, string) {}, nil, reflect.TypeOf("")},
 		{func(context.Context, *string) {}, nil, reflect.TypeOf((*string)(nil))},
-		{func(u, v, w string) {}, Err("at most 2 args"), nil},
+		{func(u, v, w string) {}, Err(Op("newCallable"), "function must have at most 2 arguments"), nil},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			call, err := newCallable(c.fn)

@@ -76,6 +76,16 @@ func BenchmarkHandlers(b *testing.B) {
 	}
 }
 
+func TestAppHandlePanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	New().Handle(1) // first arg must be a function
+}
+
 func TestAppHandleWithReflection(t *testing.T) {
 	for i, c := range []struct {
 		fn      interface{}

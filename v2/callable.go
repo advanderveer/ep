@@ -15,10 +15,12 @@ type callable struct {
 
 // newCallable reflects on the provided function 'f' to create the callable
 func newCallable(f interface{}) (c *callable, err error) {
+	var op Op = "newCallable"
+
 	c = &callable{fnv: reflect.ValueOf(f)}
 	c.fnt = reflect.TypeOf(f)
 	if c.fnt == nil || c.fnt.Kind() != reflect.Func {
-		return nil, Err("not a func")
+		return nil, Err(op, "argument is not a function")
 	}
 
 	switch c.fnt.NumIn() {
@@ -31,12 +33,12 @@ func newCallable(f interface{}) (c *callable, err error) {
 		c.inpt = c.fnt.In(0)
 	case 2:
 		if !canBeAssignedContext(c.fnt.In(0)) {
-			return nil, Err("first must be ctx")
+			return nil, Err(op, "function's first argument must implement context.Context")
 		}
 
 		c.inpt = c.fnt.In(1)
 	default:
-		return nil, Err("at most 2 args")
+		return nil, Err(op, "function must have at most 2 arguments")
 	}
 
 	return
