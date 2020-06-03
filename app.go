@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 // App holds application wide configuration for binding inputs and rendering
@@ -14,8 +14,8 @@ type App struct {
 	reqHooks []RequestHook
 	errHooks []ErrorHook
 
-	decodings []coding.Decoding
-	encodings []coding.Encoding
+	decodings []epcoding.Decoding
+	encodings []epcoding.Encoding
 }
 
 // New initiates a new ep application

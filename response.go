@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 // ResponseWriter extends the traditional http.ResponseWriter interface with
-// functionality that standardizes input decoding and output encoding.
+// functionality that standardizes input decoding and output enepcoding.
 type ResponseWriter interface {
 	Bind(in interface{}) bool
 	Render(outs ...interface{})
@@ -25,8 +25,8 @@ type response struct {
 	resHooks []ResponseHook
 	errHooks []ErrorHook
 
-	enc coding.Encoder
-	dec coding.Decoder
+	enc epcoding.Encoder
+	dec epcoding.Decoder
 
 	encContentType  string
 	encNegotiateErr error
@@ -43,8 +43,8 @@ func newResponse(
 	resh []ResponseHook,
 	errh []ErrorHook,
 
-	decs []coding.Decoding,
-	encs []coding.Encoding,
+	decs []epcoding.Decoding,
+	encs []epcoding.Encoding,
 ) *response {
 	res := &response{
 		ResponseWriter: w,
@@ -74,8 +74,8 @@ func NewResponse(
 	reqh []RequestHook,
 	resh []ResponseHook,
 	errh []ErrorHook,
-	decs []coding.Decoding,
-	encs []coding.Encoding,
+	decs []epcoding.Decoding,
+	encs []epcoding.Encoding,
 ) ResponseWriter {
 	return newResponse(w, r, reqh, resh, errh, decs, encs)
 }

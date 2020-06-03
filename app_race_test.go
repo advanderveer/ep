@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 func TestConcurrentAppHandling(t *testing.T) {
@@ -26,8 +26,8 @@ func TestConcurrentAppHandling(t *testing.T) {
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			srv := httptest.NewServer(New(
-				RequestDecoding(coding.JSON{}),
-				ResponseEncoding(coding.JSON{}),
+				RequestDecoding(epcoding.JSON{}),
+				ResponseEncoding(epcoding.JSON{}),
 			).Handle(c.fn))
 
 			var wg sync.WaitGroup

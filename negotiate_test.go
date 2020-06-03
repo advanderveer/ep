@@ -10,14 +10,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 func TestNegotiateResponseEncoder(t *testing.T) {
 	for i, c := range []struct {
 		accept string
-		encs   []coding.Encoding
-		expEnc coding.Encoder
+		encs   []epcoding.Encoding
+		expEnc epcoding.Encoder
 		expErr error
 		expCT  string
 	}{
@@ -25,18 +25,18 @@ func TestNegotiateResponseEncoder(t *testing.T) {
 			expErr: Err(Op("negotiateEncoder"), ServerError),
 		},
 		{
-			encs:   []coding.Encoding{coding.JSON{}},
+			encs:   []epcoding.Encoding{epcoding.JSON{}},
 			expEnc: new(json.Encoder),
 			expCT:  "application/json",
 		},
 		{
 			accept: "foo/bar",
-			encs:   []coding.Encoding{coding.JSON{}},
+			encs:   []epcoding.Encoding{epcoding.JSON{}},
 			expErr: Err(Op("negotiateEncoder"), UnacceptableError),
 		},
 		{
 			accept: "application/json",
-			encs:   []coding.Encoding{coding.JSON{}},
+			encs:   []epcoding.Encoding{epcoding.JSON{}},
 			expEnc: new(json.Encoder),
 			expCT:  "application/json",
 		},
@@ -69,8 +69,8 @@ func TestNegotiateRequestDecoder(t *testing.T) {
 	for i, c := range []struct {
 		body   string
 		ct     string
-		decs   []coding.Decoding
-		expDec coding.Decoder
+		decs   []epcoding.Decoding
+		expDec epcoding.Decoder
 		expErr error
 	}{
 		{
@@ -83,16 +83,16 @@ func TestNegotiateRequestDecoder(t *testing.T) {
 		},
 		{
 			"{}", "foo/bar ; charset=UTF-8",
-			[]coding.Decoding{coding.JSON{}}, nil,
+			[]epcoding.Decoding{epcoding.JSON{}}, nil,
 			Err(Op("negotiateDecoder"), UnsupportedError),
 		},
 		{
 			"{}", "application/json ; charset=UTF-8",
-			[]coding.Decoding{coding.JSON{}}, &json.Decoder{}, nil,
+			[]epcoding.Decoding{epcoding.JSON{}}, &json.Decoder{}, nil,
 		},
 		{
 			" {", "",
-			[]coding.Decoding{coding.JSON{}}, &json.Decoder{}, nil,
+			[]epcoding.Decoding{epcoding.JSON{}}, &json.Decoder{}, nil,
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {

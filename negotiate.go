@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"net/http"
 
-	"github.com/advanderveer/ep/accept"
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
+	"github.com/advanderveer/ep/internal/accept"
 )
 
 // detectContentType attempt to guess the content type by looking at the
@@ -37,7 +37,7 @@ func detectContentType(b []byte) (ct string) {
 // negotiateDecoder will inspect the request and available body decoders
 // to figure out which should be used. It returns nil when the request's body
 // should not be considered by the server and an error if this is unexpected.
-func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, error) {
+func negotiateDecoder(r *http.Request, decs []epcoding.Decoding) (epcoding.Decoder, error) {
 	const op Op = "negotiateDecoder"
 
 	// If the request has a content-type it has explicitely indicated to have
@@ -89,8 +89,8 @@ func negotiateDecoder(r *http.Request, decs []coding.Decoding) (coding.Decoder, 
 func negotiateEncoder(
 	r *http.Request,
 	w http.ResponseWriter,
-	encs []coding.Encoding,
-) (coding.Encoder, string, error) {
+	encs []epcoding.Encoding,
+) (epcoding.Encoder, string, error) {
 	const op Op = "negotiateEncoder"
 
 	if len(encs) < 1 {

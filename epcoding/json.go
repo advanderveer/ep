@@ -1,4 +1,4 @@
-package coding
+package epcoding
 
 import (
 	"encoding/json"

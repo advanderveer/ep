@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 func BenchmarkHandlers(b *testing.B) {
@@ -33,8 +33,8 @@ func BenchmarkHandlers(b *testing.B) {
 		{ // overhead when something needs to be encoded/decoded: ~0.00323 ms
 			body: `{"Foo": "bar"}`,
 			left: New(
-				RequestDecoding(coding.JSON{}),
-				ResponseEncoding(coding.JSON{}),
+				RequestDecoding(epcoding.JSON{}),
+				ResponseEncoding(epcoding.JSON{}),
 			).Handle(func(in struct{ Foo string }) (out struct{ Bar string }) {
 				out.Bar = in.Foo
 				return
@@ -103,8 +103,8 @@ func TestAppHandleWithReflection(t *testing.T) {
 			r := httptest.NewRequest("POST", "/", strings.NewReader(c.body))
 
 			New(
-				RequestDecoding(coding.JSON{}),
-				ResponseEncoding(coding.JSON{}),
+				RequestDecoding(epcoding.JSON{}),
+				ResponseEncoding(epcoding.JSON{}),
 			).Handle(c.fn).ServeHTTP(w, r)
 
 			if w.Code != c.expCode {
@@ -177,7 +177,7 @@ func TestAppHandleWithoutReflection(t *testing.T) {
 
 		{ // render an error should also call the hooks, and shoud encode
 			opt: Options(
-				ResponseEncoding(coding.JSON{}),
+				ResponseEncoding(epcoding.JSON{}),
 				ResponseHook(always404Hook),
 				ErrorHook(errHook)),
 
@@ -187,8 +187,8 @@ func TestAppHandleWithoutReflection(t *testing.T) {
 
 		{ // steaming input to output should work as expected, with hook
 			opt: Options(
-				RequestDecoding(coding.JSON{}),
-				ResponseEncoding(coding.JSON{}),
+				RequestDecoding(epcoding.JSON{}),
+				ResponseEncoding(epcoding.JSON{}),
 				ResponseHook(always404Hook)),
 
 			method: "POST", handle: stream,
@@ -200,7 +200,7 @@ func TestAppHandleWithoutReflection(t *testing.T) {
 		{ // request hook error should render as error
 			opt: Options(
 				RequestHook(failingReqHook),
-				ResponseEncoding(coding.JSON{}),
+				ResponseEncoding(epcoding.JSON{}),
 				ResponseHook(always404Hook),
 				ErrorHook(errHook)),
 
@@ -210,7 +210,7 @@ func TestAppHandleWithoutReflection(t *testing.T) {
 
 		{ // panic should also render with encoder
 			opt: Options(
-				ResponseEncoding(coding.JSON{}),
+				ResponseEncoding(epcoding.JSON{}),
 				ErrorHook(errHook)),
 
 			method: "GET", handle: panicHandle,

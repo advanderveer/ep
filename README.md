@@ -61,7 +61,10 @@ __Features:__
 - [x] SHOULD test concurrent use of the callable     
 - [x] SHOULD benchmark callable compared to non-reflection use
 - [x] SHOULD properly do errors in callable logic
-
+- [x] SHOULD rename coding and hook to `epcoding` and `ephook` 
+- [ ] SHOULD rename app, should be open to users of the lib. Overloaded term
+- [ ] SHOULD make sure that standard error hook returns valid html (as std lib)
+       
 - [ ] COULD  research if it is possible to reduce the nr of allocations when 
              decoding and encoding. It adds about 14 more allocations compared
              to the std lib variant. 

@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/advanderveer/ep"
-	"github.com/advanderveer/ep/coding"
-	"github.com/advanderveer/ep/hook"
+	"github.com/advanderveer/ep/epcoding"
+	"github.com/advanderveer/ep/ephook"
 )
 
 type handler struct {
@@ -39,12 +39,12 @@ func New() http.Handler {
 	logs := log.New(os.Stderr, "", 0)
 
 	return &handler{app: ep.New(
-		ep.ErrorHook(hook.NewStandardError(logs)),
-		ep.RequestDecoding(coding.JSON{}),
-		ep.ResponseEncoding(coding.JSON{}),
-		ep.ResponseHook(hook.Status),
-		ep.ResponseHook(hook.Head),
-		ep.RequestHook(hook.Read),
+		ep.ErrorHook(ephook.NewStandardError(logs)),
+		ep.RequestDecoding(epcoding.JSON{}),
+		ep.ResponseEncoding(epcoding.JSON{}),
+		ep.ResponseHook(ephook.Status),
+		ep.ResponseHook(ephook.Head),
+		ep.RequestHook(ephook.Read),
 	), db: map[string]map[string]string{
 		"existing": {"name": "existing"},
 	}}

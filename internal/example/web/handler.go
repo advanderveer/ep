@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/advanderveer/ep"
-	"github.com/advanderveer/ep/coding"
-	"github.com/advanderveer/ep/hook"
+	"github.com/advanderveer/ep/epcoding"
+	"github.com/advanderveer/ep/ephook"
 )
 
 type handler struct{ app *ep.App }
@@ -26,11 +26,11 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func New() http.Handler {
 	logs := log.New(os.Stderr, "", 0)
 	h := &handler{ep.New(
-		ep.RequestHook(hook.Read),
-		ep.ResponseEncoding(coding.NewHTML(nil)),
-		ep.ResponseHook(hook.Redirect),
-		ep.ResponseHook(hook.Status),
-		ep.ErrorHook(hook.NewStandardError(logs)),
+		ep.RequestHook(ephook.Read),
+		ep.ResponseEncoding(epcoding.NewHTML(nil)),
+		ep.ResponseHook(ephook.Redirect),
+		ep.ResponseHook(ephook.Status),
+		ep.ErrorHook(ephook.NewStandardError(logs)),
 	)}
 
 	return h

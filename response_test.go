@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 func TestNegotiate(t *testing.T) {
@@ -25,8 +25,8 @@ func TestNegotiate(t *testing.T) {
 		accept string
 
 		expErr    error
-		expEnc    coding.Encoder
-		expDec    coding.Decoder
+		expEnc    epcoding.Encoder
+		expDec    epcoding.Decoder
 		expEncErr error
 		expEncCT  string
 	}{
@@ -43,7 +43,7 @@ func TestNegotiate(t *testing.T) {
 		{
 			method:   "POST",
 			body:     "{}",
-			opts:     []Option{RequestDecoding(coding.JSON{}), ResponseEncoding(coding.JSON{})},
+			opts:     []Option{RequestDecoding(epcoding.JSON{}), ResponseEncoding(epcoding.JSON{})},
 			expEnc:   new(json.Encoder),
 			expDec:   new(json.Decoder),
 			expEncCT: "application/json",
@@ -227,7 +227,7 @@ func TestPrivateRender(t *testing.T) {
 	for i, c := range []struct {
 		out   interface{}
 		hooks []ErrorHook
-		encs  []coding.Encoding
+		encs  []epcoding.Encoding
 
 		expErr    error
 		expCode   int
@@ -249,7 +249,7 @@ func TestPrivateRender(t *testing.T) {
 		},
 		{
 			out:     struct{}{},
-			encs:    []coding.Encoding{coding.JSON{}},
+			encs:    []epcoding.Encoding{epcoding.JSON{}},
 			expCode: 200,
 			expBody: "{}\n",
 			expHeader: http.Header{
@@ -259,14 +259,14 @@ func TestPrivateRender(t *testing.T) {
 		},
 		{
 			out:     make(chan struct{}), //something that cannot be encoded
-			encs:    []coding.Encoding{coding.JSON{}},
+			encs:    []epcoding.Encoding{epcoding.JSON{}},
 			expErr:  Err(Op("response.render"), EncoderError),
 			expCode: 200,
 		},
 		{ //without error hooks, the errors are logged to stdlogger and the error
 			// is encoded as is
 			out:     Err("my error"),
-			encs:    []coding.Encoding{coding.JSON{}},
+			encs:    []epcoding.Encoding{epcoding.JSON{}},
 			expCode: 200,
 			expLogs: "my error",
 			expBody: "{}\n",
@@ -277,7 +277,7 @@ func TestPrivateRender(t *testing.T) {
 		},
 		{ // following tests check that the first hook's result takes precedence
 			out:     Err("my error"),
-			encs:    []coding.Encoding{coding.JSON{}},
+			encs:    []epcoding.Encoding{epcoding.JSON{}},
 			hooks:   []ErrorHook{hook1, hook2},
 			expCode: 200,
 			expBody: `{"message":"my error"}` + "\n",
@@ -288,7 +288,7 @@ func TestPrivateRender(t *testing.T) {
 		},
 		{
 			out:     Err("other error"),
-			encs:    []coding.Encoding{coding.JSON{}},
+			encs:    []epcoding.Encoding{epcoding.JSON{}},
 			hooks:   []ErrorHook{hook2, hook1},
 			expCode: 200,
 			expBody: `{"error":"other error"}` + "\n",
@@ -342,7 +342,7 @@ func TestRenderWithDeliberateNilEncoder(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 
-	res := newResponse(w, r, nil, nil, nil, nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, nil, nil, nil, []epcoding.Encoding{epcoding.JSON{}})
 	res.enc = nil // this will cause the error we are looking to test
 
 	err := res.render("foo")
@@ -354,7 +354,7 @@ func TestRenderWithDeliberateNilEncoder(t *testing.T) {
 func TestPrivateRenderSequentially(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
-	res := newResponse(w, r, nil, nil, nil, nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, nil, nil, nil, []epcoding.Encoding{epcoding.JSON{}})
 
 	err := res.render("foo")
 	if err != nil {
@@ -385,7 +385,7 @@ func TestPrivateBind(t *testing.T) {
 		body   string
 		in     interface{}
 		hooks  []RequestHook
-		decs   []coding.Decoding
+		decs   []epcoding.Decoding
 		expErr error
 		expOK  bool
 		expIn  interface{}
@@ -422,14 +422,14 @@ func TestPrivateBind(t *testing.T) {
 		{
 			in:     struct{}{}, // not a pointer so decoder fails
 			method: "POST", body: `{"Foo": "bar"}`,
-			decs:   []coding.Decoding{coding.JSON{}},
+			decs:   []epcoding.Decoding{epcoding.JSON{}},
 			expErr: Err(Op("response.bind"), DecoderError),
 			expIn:  struct{}{},
 		},
 		{
 			in:     &struct{ Foo string }{},
 			method: "POST", body: `{"Foo": "bar"}`,
-			decs:  []coding.Decoding{coding.JSON{}},
+			decs:  []epcoding.Decoding{epcoding.JSON{}},
 			expOK: true,
 			expIn: &struct{ Foo string }{"bar"},
 		},
@@ -471,7 +471,7 @@ func TestPrivateBindSequential(t *testing.T) {
 		return nil
 	}
 
-	res := newResponse(w, r, []RequestHook{hook1}, nil, nil, []coding.Decoding{coding.JSON{}}, nil)
+	res := newResponse(w, r, []RequestHook{hook1}, nil, nil, []epcoding.Decoding{epcoding.JSON{}}, nil)
 
 	for i := 0; i < 100; i++ {
 		var in struct{ Foo string }
@@ -513,7 +513,7 @@ func TestRenderErrorPrecedence(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	h := shouldRenderErr(t, e)
-	res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, []epcoding.Encoding{epcoding.JSON{}})
 
 	res.Render(struct{}{}, e)
 }
@@ -533,7 +533,7 @@ func TestRenderDoublePassPanic(t *testing.T) {
 
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
-	res := newResponse(w, r, nil, nil, []ErrorHook{hook}, nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, nil, []ErrorHook{hook}, nil, []epcoding.Encoding{epcoding.JSON{}})
 
 	res.Render(make(chan struct{}), nil)
 }
@@ -542,7 +542,7 @@ func TestBindSuccess(t *testing.T) {
 	r := httptest.NewRequest("POST", "/", strings.NewReader(`{"Foo": "bar"}`))
 	w := httptest.NewRecorder()
 
-	res := newResponse(w, r, nil, nil, nil, []coding.Decoding{coding.JSON{}}, nil)
+	res := newResponse(w, r, nil, nil, nil, []epcoding.Decoding{epcoding.JSON{}}, nil)
 
 	var in struct{ Foo string }
 	ok := res.Bind(&in)
@@ -561,7 +561,7 @@ func TestBindError(t *testing.T) {
 
 	h := shouldRenderErr(t, Err(Op("response.bind")))
 	res := newResponse(w, r, nil, nil, []ErrorHook{h},
-		[]coding.Decoding{coding.JSON{}}, []coding.Encoding{coding.JSON{}})
+		[]epcoding.Decoding{epcoding.JSON{}}, []epcoding.Encoding{epcoding.JSON{}})
 
 	ok := res.Bind(struct{}{})
 	if ok {
@@ -585,7 +585,7 @@ func TestRecover(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			h := shouldRenderErr(t, c.expErr)
-			res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, []coding.Encoding{coding.JSON{}})
+			res := newResponse(w, r, nil, nil, []ErrorHook{h}, nil, []epcoding.Encoding{epcoding.JSON{}})
 
 			func() {
 				defer res.Recover()
@@ -608,7 +608,7 @@ func TestPanicInResponseHook(t *testing.T) {
 	}
 
 	sh := shouldRenderErr(t, Err(Op("response.Recover")))
-	res := newResponse(w, r, nil, []ResponseHook{h}, []ErrorHook{sh}, nil, []coding.Encoding{coding.JSON{}})
+	res := newResponse(w, r, nil, []ResponseHook{h}, []ErrorHook{sh}, nil, []epcoding.Encoding{epcoding.JSON{}})
 
 	func() {
 		defer res.Recover()

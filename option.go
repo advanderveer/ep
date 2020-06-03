@@ -3,7 +3,7 @@ package ep
 import (
 	"net/http"
 
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 // Option configures the app
@@ -27,11 +27,11 @@ func Options(opts ...Option) Option {
 
 // ResponseEncoding option adds an additional supported response encoding for
 // this app
-func ResponseEncoding(enc coding.Encoding) Option {
+func ResponseEncoding(enc epcoding.Encoding) Option {
 	return responseEncoding{enc}
 }
 
-type responseEncoding struct{ coding.Encoding }
+type responseEncoding struct{ epcoding.Encoding }
 
 func (o responseEncoding) apply(a *App) {
 	a.encodings = append(a.encodings, o.Encoding)
@@ -39,11 +39,11 @@ func (o responseEncoding) apply(a *App) {
 
 // RequestDecoding option adds an additional supported request decoding for this
 // app
-func RequestDecoding(dec coding.Decoding) Option {
+func RequestDecoding(dec epcoding.Decoding) Option {
 	return requestDecoding{dec}
 }
 
-type requestDecoding struct{ coding.Decoding }
+type requestDecoding struct{ epcoding.Decoding }
 
 func (o requestDecoding) apply(a *App) {
 	a.decodings = append(a.decodings, o.Decoding)

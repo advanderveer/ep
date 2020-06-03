@@ -1,4 +1,4 @@
-package hook
+package ephook
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/advanderveer/ep"
-	"github.com/advanderveer/ep/coding"
+	"github.com/advanderveer/ep/epcoding"
 )
 
 func TestPrivateErrorLogs(t *testing.T) {
@@ -25,21 +25,21 @@ func TestPrivateErrorLogs(t *testing.T) {
 
 func TestPrivateErrorWithResponseHookAndEncoding(t *testing.T) {
 	for i, c := range []struct {
-		enc     coding.Encoding
+		enc     epcoding.Encoding
 		err     error
 		expCode int
 		expBody string
 	}{
 		// should not create outputs for non-ep errors and nil
-		{coding.JSON{}, nil, 200, "null\n"},
-		{coding.JSON{}, errors.New("foo"), 200, "null\n"},
+		{epcoding.JSON{}, nil, 200, "null\n"},
+		{epcoding.JSON{}, errors.New("foo"), 200, "null\n"},
 
-		{coding.JSON{}, ep.Err("foo"), 500, `{"message":"Internal Server Error"}` + "\n"},
-		{coding.JSON{}, ep.Err(ep.DecoderError), 400, `{"message":"Bad Request"}` + "\n"},
-		{coding.JSON{}, ep.Err(ep.UnsupportedError), 415, `{"message":"Unsupported Media Type"}` + "\n"},
-		{coding.JSON{}, ep.Err(ep.UnacceptableError), 406, `{"message":"Not Acceptable"}` + "\n"},
-		{coding.XML{}, ep.Err(ep.UnacceptableError), 406, `<Error><Message>Not Acceptable</Message></Error>`},
-		{coding.NewHTML(nil), ep.Err(ep.UnacceptableError), 406, `Not Acceptable`},
+		{epcoding.JSON{}, ep.Err("foo"), 500, `{"message":"Internal Server Error"}` + "\n"},
+		{epcoding.JSON{}, ep.Err(ep.DecoderError), 400, `{"message":"Bad Request"}` + "\n"},
+		{epcoding.JSON{}, ep.Err(ep.UnsupportedError), 415, `{"message":"Unsupported Media Type"}` + "\n"},
+		{epcoding.JSON{}, ep.Err(ep.UnacceptableError), 406, `{"message":"Not Acceptable"}` + "\n"},
+		{epcoding.XML{}, ep.Err(ep.UnacceptableError), 406, `<Error><Message>Not Acceptable</Message></Error>`},
+		{epcoding.NewHTML(nil), ep.Err(ep.UnacceptableError), 406, `Not Acceptable`},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			w := httptest.NewRecorder()
