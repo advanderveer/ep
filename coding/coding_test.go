@@ -1,86 +1,115 @@
-package epcoding
+package coding
 
 import (
-	"net/http"
+	"errors"
+	"html/template"
+	"net/http/httptest"
+	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 )
 
-func TestEncodingNegotiation(t *testing.T) {
-	t.Run("empty header empty encodings", func(t *testing.T) {
-		hdr := http.Header{}
-		enc := NegotiateEncoding(hdr, []Encoding{})
-		if enc != nil {
-			t.Fatalf("unexpected, got: %v", enc)
-		}
-	})
+type output1 struct{ Foo string }
 
-	t.Run("simple header empty encodings", func(t *testing.T) {
-		hdr := http.Header{}
-		hdr.Set("Accept", "application/json")
+func (o output1) Template() string { return "root" }
 
-		enc := NegotiateEncoding(hdr, []Encoding{})
-		if enc != nil {
-			t.Fatalf("unexpected, got: %v", enc)
-		}
-	})
+type output2 struct{ Foo string }
 
-	t.Run("simple header one encoding", func(t *testing.T) {
-		hdr := http.Header{}
-		hdr.Set("Accept", "application/json")
-
-		jsone := NewJSONEncoding()
-		enc := NegotiateEncoding(hdr, []Encoding{jsone})
-		if enc != jsone {
-			t.Fatalf("unexpected, got: %v", enc)
-		}
-	})
-
-	t.Run("duplicate encoding produce", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Fatalf("should panic")
-			}
-		}()
-
-		hdr := http.Header{}
-		hdr.Set("Accept", "application/json")
-
-		jsone := NewJSONEncoding()
-		jsonb := NewJSONEncoding()
-		_ = NegotiateEncoding(hdr, []Encoding{jsone, jsonb})
-
-	})
+func (o output2) Template() *template.Template {
+	return template.Must(template.New("root").Parse(`hello2 {{.Foo}}!`))
 }
 
-func TestDecodingNegotiation(t *testing.T) {
-	t.Run("without any decoders, should be nil", func(t *testing.T) {
-		hdr := http.Header{}
-		dec := NegotiateDecoding(hdr, []Decoding{})
-		if dec != nil {
-			t.Fatalf("unexpected, got: %v", dec)
-		}
-	})
+func TestEncodings(t *testing.T) {
+	tmpl1 := template.Must(template.New("root").Parse(`hello {{ .Foo }}!`))
 
-	t.Run("without any header, should be default", func(t *testing.T) {
-		hdr := http.Header{}
+	for i, c := range []struct {
+		enc         Encoding
+		out         interface{}
+		expErr      error
+		expProduces string
+		expBody     string
+	}{
+		{JSON{}, struct{}{}, nil, "application/json", `{}` + "\n"},
+		{XML{}, output1{"bar"}, nil, "application/xml", `<output1><Foo>bar</Foo></output1>`},
+		{NewHTML(tmpl1), output1{"bar"}, nil, "text/html", `hello bar!`},
+		{NewHTML(nil), output2{"bar"}, nil, "text/html", `hello2 bar!`},
+		{NewHTML(tmpl1), struct{}{}, NoTemplateSpecified, "text/html", ``},
+	} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			if c.enc.Produces() != c.expProduces {
+				t.Fatalf("expected encoder to produce '%s', got: '%s'", c.expProduces, c.enc.Produces())
+			}
 
-		jsond := NewJSONDecoding()
-		xmld := NewXMLDecoding()
-		dec := NegotiateDecoding(hdr, []Decoding{xmld, jsond})
-		if dec != xmld {
-			t.Fatalf("unexpected, got: %v", dec)
-		}
-	})
+			w := httptest.NewRecorder()
+			e := c.enc.Encoder(w)
+			err := e.Encode(c.out)
+			if !errors.Is(err, c.expErr) {
+				t.Fatalf("expected error: %#v, got: %#v", c.expErr, err)
+			}
 
-	t.Run("should select json", func(t *testing.T) {
-		hdr := http.Header{}
-		hdr.Set("Content-Type", "application/json; charset=UTF-8")
+			if w.Body.String() != c.expBody {
+				t.Fatalf("expected encoding body '%s', got: '%s'", c.expBody, w.Body.String())
+			}
+		})
+	}
+}
 
-		jsond := NewJSONDecoding()
-		xmld := NewXMLDecoding()
-		dec := NegotiateDecoding(hdr, []Decoding{xmld, jsond})
-		if dec != jsond {
-			t.Fatalf("unexpected, got: %v", dec)
-		}
-	})
+func TestDecodings(t *testing.T) {
+	type Input struct{ Foo string }
+	type Input2 struct{ Foo []string }
+
+	for i, c := range []struct {
+		dec        Decoding
+		in         interface{}
+		body       string
+		ct         string
+		expErr     error
+		expAccepts string
+		expIn      interface{}
+	}{
+		{
+			JSON{}, &struct{ Foo string }{}, `{"Foo": "bar"}`, "",
+			nil, "application/json, application/vnd.api+json",
+			&struct{ Foo string }{"bar"},
+		},
+
+		{
+			XML{}, &Input{}, `<Output><Foo>bar</Foo></Output>`, "",
+			nil, "application/xml, text/xml",
+			&Input{"bar"},
+		},
+
+		{
+			NewForm(urldec1{}), &Input2{}, `Foo=bar`, "",
+			nil, "application/x-www-form-urlencoded, multipart/form-data",
+			&Input2{}, // failed because content-type was not set to urlencode
+		},
+		{
+			NewForm(urldec1{}), &Input2{}, `Foo=bar`, "application/x-www-form-urlencoded",
+			nil, "application/x-www-form-urlencoded, multipart/form-data",
+			&Input2{[]string{"bar"}},
+		},
+	} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			if c.dec.Accepts() != c.expAccepts {
+				t.Fatalf("expected decoder to accept '%s', got: '%s'", c.expAccepts, c.dec.Accepts())
+			}
+
+			r := httptest.NewRequest("POST", "/?Foo=bar", strings.NewReader(c.body))
+			if c.ct != "" {
+				r.Header.Set("Content-Type", c.ct)
+			}
+
+			d := c.dec.Decoder(r)
+			err := d.Decode(c.in)
+			if !errors.Is(err, c.expErr) {
+				t.Fatalf("expected error: %#v, got: %#v", c.expErr, err)
+			}
+
+			if !reflect.DeepEqual(c.in, c.expIn) {
+				t.Fatalf("expected in to be %#v, got: %#v", c.expIn, c.in)
+			}
+		})
+	}
 }

@@ -1,13 +1,6 @@
-// Copyright 2013 The Go Authors. All rights reserved.
-//
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file or at
-// https://developers.google.com/open-source/licenses/bsd.
-
 package accept
 
 import (
-	"net/http"
 	"strings"
 )
 
@@ -16,12 +9,14 @@ import (
 // offer is preferred.  For example, text/* trumps */*. If two offers match
 // with equal weight and specificity, then the offer earlier in the list is
 // preferred. If no offers match, then defaultOffer is returned.
-func Negotiate(hk string, h http.Header, offers []string, defaultOffer string) string {
-	bestOffer := defaultOffer
+func Negotiate(asks, offers []string) (int, int) {
+	bestOffer := -1
+	matchedAsk := -1
+
 	bestQ := -1.0
 	bestWild := 3
-	specs := Parse(h, hk)
-	for _, offer := range offers {
+	specs := Parse(asks)
+	for i, offer := range offers {
 		for _, spec := range specs {
 			switch {
 			case spec.Q == 0.0:
@@ -32,24 +27,27 @@ func Negotiate(hk string, h http.Header, offers []string, defaultOffer string) s
 				if spec.Q > bestQ || bestWild > 2 {
 					bestQ = spec.Q
 					bestWild = 2
-					bestOffer = offer
+					bestOffer = i
+					matchedAsk = spec.Index
 				}
 			case strings.HasSuffix(spec.Value, "/*"):
 				if strings.HasPrefix(offer, spec.Value[:len(spec.Value)-1]) &&
 					(spec.Q > bestQ || bestWild > 1) {
 					bestQ = spec.Q
 					bestWild = 1
-					bestOffer = offer
+					bestOffer = i
+					matchedAsk = spec.Index
 				}
 			default:
 				if spec.Value == offer &&
 					(spec.Q > bestQ || bestWild > 0) {
 					bestQ = spec.Q
 					bestWild = 0
-					bestOffer = offer
+					bestOffer = i
+					matchedAsk = spec.Index
 				}
 			}
 		}
 	}
-	return bestOffer
+	return bestOffer, matchedAsk
 }

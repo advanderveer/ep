@@ -1,275 +1,294 @@
 package ep
 
 import (
-	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/advanderveer/ep/coding"
 )
 
-var (
-	// SkipEncode can be retured by the output head to prevent any further
-	// decoding
-	SkipEncode = errors.New("skip encode")
-)
+// ResponseWriter extends the traditional http.ResponseWriter interface with
+// functionality that standardizes input decoding and output encoding.
+type ResponseWriter interface {
+	Bind(in interface{}) bool
+	Render(outs ...interface{})
+	Recover()
+	http.ResponseWriter
+}
 
-// Response is an http.ResponseWriter implementation that comes with
-// a host of untility method for common tasks in http handling.
-type Response struct {
-	wr  http.ResponseWriter
+type response struct {
+	http.ResponseWriter
 	req *http.Request
-	cfg ConfReader
-	dec epcoding.Decoder
-	enc epcoding.Encoder
 
-	responseContentType string
+	reqHooks []RequestHook
+	resHooks []ResponseHook
+	errHooks []ErrorHook
 
-	state struct {
-		wroteHeader int
-		clientErr   error // BadRequest status
-		serverErr   error // InternalServerError
-	}
+	enc coding.Encoder
+	dec coding.Decoder
+
+	encContentType  string
+	encNegotiateErr error
+	decNegotiateErr error
+	wroteHeader     bool
+	runningReqHooks bool
+	currentOutput   interface{}
 }
 
-// NewResponse initializes a new Response
+func newResponse(
+	w http.ResponseWriter,
+	r *http.Request,
+	reqh []RequestHook,
+	resh []ResponseHook,
+	errh []ErrorHook,
+
+	decs []coding.Decoding,
+	encs []coding.Encoding,
+) *response {
+	res := &response{
+		ResponseWriter: w,
+		req:            r,
+
+		reqHooks: reqh,
+		resHooks: resh,
+		errHooks: errh,
+	}
+
+	// any failure to negotiate is only important if we actually wanna decode
+	// something during a call to bind
+	res.dec, res.decNegotiateErr = negotiateDecoder(res.req, decs)
+
+	// Failing to negotiate an encoder is only important when we know for sure
+	// that it will be used during a call to render. The user might decide to
+	// write to the response itself, or the API doesn't need encoding at all.
+	// So we keep the error in the response to be reported later.
+	res.enc, res.encContentType, res.encNegotiateErr = negotiateEncoder(res.req, res, encs)
+	return res
+}
+
+// NewResponse initializes a ResponseWriter
 func NewResponse(
-	wr http.ResponseWriter,
-	req *http.Request,
-	cfg ConfReader,
-) (res *Response) {
-	res = &Response{
-		wr:  wr,
-		req: req,
-		cfg: cfg,
-	}
-
-	if e := Encoding(req.Context()); e != nil {
-		res.responseContentType = e.Produces()
-		res.enc = e.Encoder(wr)
-	}
-
-	if d := Decoding(req.Context()); d != nil {
-		res.dec = d.Decoder(req)
-	}
-
-	res.state.wroteHeader = -1
-	return
+	w http.ResponseWriter,
+	r *http.Request,
+	reqh []RequestHook,
+	resh []ResponseHook,
+	errh []ErrorHook,
+	decs []coding.Decoding,
+	encs []coding.Encoding,
+) ResponseWriter {
+	return newResponse(w, r, reqh, resh, errh, decs, encs)
 }
 
-// Error will return any server, client or app error that was
-// encountered while formulating the response.
-func (r *Response) Error() error {
-	switch {
-	case r.state.serverErr != nil:
-		return r.state.serverErr
-	case r.state.clientErr != nil:
-		return r.state.clientErr
-	default:
-		return nil
+// Write some data to the response body. If the header was not yet written this
+// method will make an implicit call to WriteHeader which will call any hooks
+// in order.
+func (res *response) Write(b []byte) (int, error) {
+	if !res.wroteHeader {
+		res.WriteHeader(http.StatusOK)
 	}
+
+	return res.ResponseWriter.Write(b)
 }
 
-// Bind will use the negotiated decoder to populate the input.
-func (r *Response) Bind(in Input) (ok bool) {
-
-	// without input, binding succeeds because endpoints without input should
-	// always render
-	if in == nil {
-		return true
-	}
-
-	// input may implement a reader function that takes the raw request and
-	// should initialize the input. Userfull for header reading, url params
-	// and setting default values for input.
-	if reqr, reqrok := in.(ReaderInput); reqrok {
-		err := reqr.Read(r.req)
-		if err != nil {
-			r.state.clientErr = err
-			r.render(nil)
-			return
-		}
-	}
-
-	// if there is a query decoder configured and the url has a valid query
-	// it will be decoded into the input
-	if qdec := r.cfg.QueryDecoder(); qdec != nil {
-		qvals, err := url.ParseQuery(r.req.URL.RawQuery)
-		if err != nil {
-			r.state.clientErr = err
-			r.render(nil)
-			return
-		}
-
-		err = qdec.Decode(in, qvals)
-		if err != nil {
-			r.state.clientErr = err
-			r.render(nil)
-			return
-		}
-	}
-
-	// it is valid to have no decoder and just rely on the read implementation
-	// to populate the input.
-	if r.dec == nil || r.req.ContentLength == 0 || r.req.Body == nil {
-		return true
-	}
-
-	// with a decoder and input we ask the decoder to deserialize
-	err := r.dec.Decode(in)
-	if err == io.EOF {
-		return false // just be done, no more data
-	} else if err != nil {
-		r.state.clientErr = err // includes io.EOF
-		r.render(nil)
+// WriteHeader will call any configured hooks and sends the http response header
+// with the resulting status code.
+func (res *response) WriteHeader(statusCode int) {
+	if res.wroteHeader {
 		return
 	}
 
-	return true
-}
-
-// Validate will validate the input and return any error. It will first
-// use any struct validator first before using the input's check method.
-func (r *Response) Validate(in Input) (verr error) {
-	if in == nil {
-		return // no input is always valid
-	}
-
-	// call any non-custom validation, if configured
-	if v := r.cfg.Validator(); v != nil {
-		verr = v.Validate(in)
-		if verr != nil {
-			return verr
+	if !res.runningReqHooks {
+		res.runningReqHooks = true
+		defer func() { res.runningReqHooks = false }()
+		for _, h := range res.resHooks {
+			h(
+				res,
+				res.req,
+				res.currentOutput, // might be nil
+			)
 		}
 	}
 
-	// inputs may optionally implement a validation method
-	if inval, ok := in.(CheckerInput); ok {
-		verr = inval.Validate()
+	// this check ensures that if any hooks called writeHeader we won't be
+	// calling it again.
+	if res.wroteHeader {
+		return
 	}
 
-	return
+	res.ResponseWriter.WriteHeader(statusCode)
+	res.wroteHeader = true
 }
 
-// Render will assert the provided error and earlier errors and provide
-// appropriate feedback in the response. If 'err' is not the same error
-// as returned by Validate() it will be handled as a server error.
-func (r *Response) Render(out Output, err error) {
+// Bind will decode the next value from the request into the input 'in'
+func (res *response) Bind(in interface{}) bool {
+	ok, err := res.bind(in)
 	if err != nil {
-		r.state.serverErr = err
+		res.Render(nil, err)
+		return false
 	}
 
-	err = r.render(out) // first pass
+	return ok
+}
+
+func (res *response) bind(in interface{}) (ok bool, err error) {
+	const op Op = "response.bind"
+
+	for _, h := range res.reqHooks {
+		if err := h(res.req, in); err != nil {
+			return false, Err(op, "request hook failed", err, RequestHookError)
+		}
+	}
+
+	// if the input is nil or has an SkipDecode() method we skip decoding
+	switch vt := in.(type) {
+	case nil:
+		return true, nil
+	case interface{ SkipDecode() bool }:
+		if vt.SkipDecode() {
+			return true, nil
+		}
+	}
+
+	if res.decNegotiateErr != nil {
+		return false, res.decNegotiateErr
+	}
+
+	if res.dec == nil {
+		return true, nil
+	}
+
+	err = res.dec.Decode(in)
+	if err == io.EOF {
+		return false, nil
+	} else if err != nil {
+		return false, Err(op, "request body decoder failed", err, DecoderError)
+	}
+
+	return true, nil
+}
+
+// Render will encode the first non-nil argument into the response body. If any
+// of the arguments is an error, it takes precedence and is rendered instead.
+func (res *response) Render(outs ...interface{}) {
+	var out interface{}
+	for _, o := range outs {
+		switch o.(type) {
+		case nil:
+		case error:
+			out = o
+		default:
+			if out == nil {
+				out = o
+			}
+		}
+	}
+
+	err := res.render(out) // first pass
 	if err != nil {
-		err = r.render(nil) // second pass
+		err = res.render(err) // second pass
 		if err != nil {
 			panic("ep/response: failed to render: " + err.Error())
 		}
 	}
 }
 
-// render solely based on the internal state of the response.
-func (r *Response) render(out Output) (err error) {
+// render just the output value
+func (res *response) render(v interface{}) (err error) {
+	const op Op = "response.render"
 
-	// we turn server errors and client errors into an output using the
-	// configured error handler
-	if errh := r.cfg.OnErrorRender(); errh != nil {
-		switch {
-		case r.state.serverErr != nil && r.state.serverErr != SkipEncode:
-			out = errh(false, r.state.serverErr)
-		case r.state.clientErr != nil:
-			out = errh(true, r.state.clientErr)
+	if errv, ok := v.(error); ok {
+
+		// If there was an error but no hooks to turn it into an output
+		// we log this situation to the default logger so the user knows
+		// whats going on.
+		if len(res.errHooks) < 1 {
+			log.Printf("ep: no error hooks to render error: %v", errv)
 		}
-	}
 
-	// if there is a content type for the response, set it before header written
-	if r.responseContentType != "" && r.state.wroteHeader < 0 {
-		r.Header().Set("Content-Type", r.responseContentType)
-	}
-
-	// it is possible to configure hooks that will be run if the header has not
-	// been written yet. This allows for composable behavior on output structs
-	// or based on context values
-	if r.state.wroteHeader < 0 {
-		for _, h := range r.cfg.Hooks() {
-			err = h(out, r, r.req)
-			if err == SkipEncode {
-				r.enc = nil // prevent encoding
-				continue
-			} else if err != nil {
-				r.state.serverErr = err
-				return
+		// Error hooks are responsible for turning any error into an output
+		// that can be rendered by the encoder.
+		// var foundErrOutput bool
+		for _, h := range res.errHooks {
+			if eout := h(errv); eout != nil {
+				v = eout
+				break
 			}
 		}
 	}
 
-	// skip encoding if: there is no encoding configured, http standard define
-	// there to be no content or the user returned SkipEncode explicitely
-	if r.enc == nil ||
-		!bodyAllowedForStatus(r.state.wroteHeader) ||
-		r.state.serverErr == SkipEncode {
-		return
+	// WriteHeader needs access to the output value but the interface refrains
+	// us from passing it as an argument so we need to set it as an temporary
+	// struct member.
+	res.currentOutput = v
+	defer func() { res.currentOutput = nil }()
+
+	// If the value turns out to be nil or implements the Empty() method, we won't
+	// be needing any encoder but still wanna write the header and call any
+	// response hooks.
+	switch vt := v.(type) {
+	case nil:
+		res.WriteHeader(http.StatusOK)
+		return nil
+	case interface{ Empty() bool }:
+		if vt.Empty() {
+			res.WriteHeader(http.StatusOK)
+			return nil
+		}
 	}
 
-	err = r.enc.Encode(out)
+	// We for sure have a value to encode, so if we had any issues with getting
+	// an encoder we will stop here
+	if res.encNegotiateErr != nil {
+		return res.encNegotiateErr
+	}
+
+	// The encoder is nil without any enc negotiation error
+	if res.enc == nil {
+		return Err(op, "no encoder to serialize non-nil output value", ServerError)
+	}
+
+	var ctFromEnc bool
+	if res.Header().Get("Content-Type") == "" {
+		ctFromEnc = true
+		res.Header().Set("Content-Type", res.encContentType)
+
+		// we know the content-type for sure so we can prevent content sniffing
+		res.Header().Set("X-Content-Type-Options", "nosniff")
+	}
+
+	err = res.enc.Encode(v)
 	if err != nil {
-		r.state.serverErr = err
-		return
+
+		// If we just added the content-type header but the encoding fails we
+		// reset it such that a subsequent call to render can set it again.
+		if ctFromEnc {
+			res.Header().Del("Content-Type")
+			res.Header().Del("X-Content-Type-Options")
+		}
+
+		return Err(op, "response body encoder failed", err, EncoderError)
 	}
 
 	return
 }
 
-// RecoverRender allows the response to recover from a panic in the stack and
-// render an internal server error.
-func (r *Response) RecoverRender() {
-	reco := recover()
-	if reco == nil {
+func (res *response) Recover() {
+	r := recover()
+	if r == nil {
 		return
 	}
 
 	var perr error
-	switch rt := reco.(type) {
+	switch rt := r.(type) {
 	case error:
-		perr = rt
+		perr = Err(Op("response.Recover"), "error", ServerError, rt)
 	case string:
-		perr = errors.New(rt)
+		perr = Err(Op("response.Recover"), rt, ServerError)
 	default:
-		perr = errors.New(fmt.Sprint(rt))
+		perr = Err(Op("response.Recover"), "unknown panic", ServerError)
+		return
 	}
 
-	r.Render(nil, perr)
-}
-
-// Header implements the http.ResponseWriter's "Header" method
-func (r *Response) Header() http.Header {
-	return r.wr.Header()
-}
-
-// Write implements the http.ResponseWriter's "Write" method
-func (r *Response) Write(b []byte) (int, error) {
-	r.state.wroteHeader = http.StatusOK // because underlying http.ResponseWriter does so
-	return r.wr.Write(b)
-}
-
-// WriteHeader implements the http.ResponseWriter's "WriteHeader" method
-func (r *Response) WriteHeader(statusCode int) {
-	r.state.wroteHeader = statusCode
-	r.wr.WriteHeader(statusCode)
-}
-
-// bodyAllowedForStatus reports whether a given response status code
-// permits a body. See RFC 7230, section 3.3.
-func bodyAllowedForStatus(status int) bool {
-	switch {
-	case status >= 100 && status <= 199:
-		return false
-	case status == 204:
-		return false
-	case status == 304:
-		return false
-	}
-	return true
+	res.Render(nil, perr)
 }

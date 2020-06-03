@@ -1,16 +1,7 @@
-// Copyright 2013 The Go Authors. All rights reserved.
-//
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file or at
-// https://developers.google.com/open-source/licenses/bsd.
-
-// Package header provides functions for parsing HTTP headers.
 package accept
 
 import (
-	"net/http"
 	"strings"
-	"time"
 )
 
 // Octet types from RFC 2616.
@@ -55,86 +46,11 @@ func init() {
 	}
 }
 
-// Copy returns a shallow copy of the header.
-func Copy(header http.Header) http.Header {
-	h := make(http.Header)
-	for k, vs := range header {
-		h[k] = vs
-	}
-	return h
-}
-
-var timeLayouts = []string{"Mon, 02 Jan 2006 15:04:05 GMT", time.RFC850, time.ANSIC}
-
-// ParseTime parses the header as time. The zero value is returned if the
-// header is not present or there is an error parsing the
-// header.
-func ParseTime(header http.Header, key string) time.Time {
-	if s := header.Get(key); s != "" {
-		for _, layout := range timeLayouts {
-			if t, err := time.Parse(layout, s); err == nil {
-				return t.UTC()
-			}
-		}
-	}
-	return time.Time{}
-}
-
-// ParseList parses a comma separated list of values. Commas are ignored in
-// quoted strings. Quoted values are not unescaped or unquoted. Whitespace is
-// trimmed.
-func ParseList(header http.Header, key string) []string {
-	var result []string
-	for _, s := range header[http.CanonicalHeaderKey(key)] {
-		begin := 0
-		end := 0
-		escape := false
-		quote := false
-		for i := 0; i < len(s); i++ {
-			b := s[i]
-			switch {
-			case escape:
-				escape = false
-				end = i + 1
-			case quote:
-				switch b {
-				case '\\':
-					escape = true
-				case '"':
-					quote = false
-				}
-				end = i + 1
-			case b == '"':
-				quote = true
-				end = i + 1
-			case octetTypes[b]&isSpace != 0:
-				if begin == end {
-					begin = i + 1
-					end = begin
-				}
-			case b == ',':
-				if begin < end {
-					result = append(result, s[begin:end])
-				}
-				begin = i + 1
-				end = begin
-			default:
-				end = i + 1
-			}
-		}
-		if begin < end {
-			result = append(result, s[begin:end])
-		}
-	}
-	return result
-}
-
 // ParseValueAndParams parses a comma separated list of values with optional
 // semicolon separated name-value pairs. Content-Type and Content-Disposition
 // headers are in this format.
-func ParseValueAndParams(header http.Header, key string) (value string, params map[string]string) {
+func ParseValueAndParams(s string) (value string, params map[string]string) {
 	params = make(map[string]string)
-	s := header.Get(key)
 	value, s = expectTokenSlash(s)
 	if value == "" {
 		return
@@ -166,14 +82,16 @@ func ParseValueAndParams(header http.Header, key string) (value string, params m
 type AcceptSpec struct {
 	Value string
 	Q     float64
+	Index int
 }
 
 // Parse parses Accept* kind headers.
-func Parse(header http.Header, key string) (specs []AcceptSpec) {
+func Parse(parts []string) (specs []AcceptSpec) {
 loop:
-	for _, s := range header[key] {
+	for i, s := range parts {
 		for {
 			var spec AcceptSpec
+			spec.Index = i
 			spec.Value, s = expectTokenSlash(s)
 			if spec.Value == "" {
 				continue loop
@@ -209,16 +127,6 @@ func skipSpace(s string) (rest string) {
 		}
 	}
 	return s[i:]
-}
-
-func expectToken(s string) (token, rest string) {
-	i := 0
-	for ; i < len(s); i++ {
-		if octetTypes[s[i]]&isToken == 0 {
-			break
-		}
-	}
-	return s[:i], s[i:]
 }
 
 func expectTokenSlash(s string) (token, rest string) {
@@ -260,6 +168,16 @@ func expectQuality(s string) (q float64, rest string) {
 		d *= 10
 	}
 	return q + float64(n)/float64(d), s[i:]
+}
+
+func expectToken(s string) (token, rest string) {
+	i := 0
+	for ; i < len(s); i++ {
+		if octetTypes[s[i]]&isToken == 0 {
+			break
+		}
+	}
+	return s[:i], s[i:]
 }
 
 func expectTokenOrQuoted(s string) (value string, rest string) {
