@@ -11,7 +11,39 @@ import (
 	"github.com/advanderveer/ep/v2/coding"
 )
 
-func TestApp(t *testing.T) {
+func TestAppHandleWithReflection(t *testing.T) {
+	for i, c := range []struct {
+		fn      interface{}
+		body    string
+		expCode int
+		expBody string
+	}{
+		{func() {}, ``, 200, ``},
+		{func(a string) string { return a }, `"foo"`, 200, `"foo"` + "\n"},
+		{func(a *string) string { return *a }, `"rab"`, 200, `"rab"` + "\n"},
+		{func(myCtx) string { return "bar" }, ``, 200, `"bar"` + "\n"},
+	} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/", strings.NewReader(c.body))
+
+			New(
+				RequestDecoding(coding.JSON{}),
+				ResponseEncoding(coding.JSON{}),
+			).Handle(c.fn).ServeHTTP(w, r)
+
+			if w.Code != c.expCode {
+				t.Fatalf("expected code: %d, got: %d", c.expCode, w.Code)
+			}
+
+			if w.Body.String() != c.expBody {
+				t.Fatalf("expected body: '%s', got: '%s'", c.expBody, w.Body.String())
+			}
+		})
+	}
+}
+
+func TestAppHandleWithoutReflection(t *testing.T) {
 	errHook := func(err error) (out interface{}) {
 		return struct {
 			Message string `json:"message"`

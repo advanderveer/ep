@@ -15,12 +15,7 @@ type handler struct{ app *ep.App }
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/register":
-		h.app.Handle(func(w ep.ResponseWriter, r *http.Request) {
-			var in RegisterInput
-			if w.Bind(&in) {
-				w.Render(h.Register(r.Context(), in))
-			}
-		}).ServeHTTP(w, r)
+		h.app.Handle(h.Register).ServeHTTP(w, r)
 	default:
 		h.app.Handle(func(w ep.ResponseWriter, r *http.Request) {
 			w.Render(h.NotFound())

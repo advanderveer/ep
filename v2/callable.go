@@ -6,13 +6,14 @@ import (
 	"reflect"
 )
 
-// callable is created by reflecting on a function signature
+// callable represents a handler that just specifies inputs and outputs
 type callable struct {
 	fnt  reflect.Type
 	fnv  reflect.Value
 	inpt reflect.Type
 }
 
+// newCallable reflects on the provided function 'f' to create the callable
 func newCallable(f interface{}) (c *callable, err error) {
 	c = &callable{fnv: reflect.ValueOf(f)}
 	c.fnt = reflect.TypeOf(f)
@@ -41,7 +42,7 @@ func newCallable(f interface{}) (c *callable, err error) {
 	return
 }
 
-// Input returns a new pointer to a value of the input type
+// Input returns the input argument value such that it can be used to bind
 func (c *callable) Input() reflect.Value {
 	if c.inpt == nil {
 		return reflect.ValueOf(nil)
@@ -54,6 +55,7 @@ func (c *callable) Input() reflect.Value {
 	return reflect.New(c.inpt)
 }
 
+// inArg returns the input argument based on its type
 func (c *callable) inArg(in reflect.Value) reflect.Value {
 	if c.inpt.Kind() == reflect.Ptr {
 		return in
@@ -62,6 +64,7 @@ func (c *callable) inArg(in reflect.Value) reflect.Value {
 	return in.Elem()
 }
 
+// Setup the arguments for calling the callable
 func (c *callable) Args(r *http.Request, in reflect.Value) []reflect.Value {
 	args := make([]reflect.Value, c.fnt.NumIn())
 	switch len(args) {
@@ -81,6 +84,7 @@ func (c *callable) Args(r *http.Request, in reflect.Value) []reflect.Value {
 	return args
 }
 
+// Call the callable with arguments and return its outputs
 func (c *callable) Call(args []reflect.Value) []interface{} {
 	outs := c.fnv.Call(args)
 
@@ -95,6 +99,7 @@ func (c *callable) Call(args []reflect.Value) []interface{} {
 // keep the ctx type, this is the idiom to get it: https://godoc.org/reflect#example-TypeOf
 var ctxTyp = reflect.TypeOf((*context.Context)(nil)).Elem()
 
+// returns whether the type implements the standard lib context interface
 func canBeAssignedContext(typ reflect.Type) bool {
 	if typ.Kind() != reflect.Interface {
 		return false

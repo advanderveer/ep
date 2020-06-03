@@ -91,14 +91,12 @@ Should the framework be eager to decode, or not
              precedense, so redirect hook should be put in front of 
 - [x] SHOULD test the redirect hook in the rest example        
 - [ ] SHOULD test concurrent use of the callable     
-- [ ] SHOULD benchmark callable
+- [ ] SHOULD benchmark callable compared to non-reflection use
+- [ ] SHOULD properly do errors in callable logic
 
 - [ ] COULD  limit the header lenght used during negotiation so it doesn't 
              allow for DDOS attacks
 - [ ] COULD  make a response hook that sets cookies
-- [ ] COULD  add some (optional) reflect sparkles for creating the handle func
-             since the reflecting can be done out of the hot path. Maybe take
-             inspiration from the std lib rpc package
 - [ ] COULD  allow xml/json/form/template encoder/decoder configuration with the
              option pattern or outputs implementing a certain interface. The 
              latter is more flexible
@@ -111,6 +109,9 @@ Should the framework be eager to decode, or not
 - [ ] COULD  detect if decoding should happen for an input based on whether the
              hooks have read data from the request body instead of checking a
              magic method on the input.
+- [x] COULD  add some (optional) reflect sparkles for creating the handle func
+             since the reflecting can be done out of the hot path. Maybe take
+             inspiration from the std lib rpc package
 - [x] COULD  make the response.Render() method take variadic nr of interface{}
              arguments such that exec methods can return any nr of outputs.
              response.Bind() might also be able to bind more then one input.
