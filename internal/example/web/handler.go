@@ -10,14 +10,14 @@ import (
 	"github.com/advanderveer/ep/ephook"
 )
 
-type handler struct{ app *ep.App }
+type handler struct{ codec *ep.Codec }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/register":
-		h.app.Handle(h.Register).ServeHTTP(w, r)
+		h.codec.Handle(h.Register).ServeHTTP(w, r)
 	default:
-		h.app.Handle(func(w ep.ResponseWriter, r *http.Request) {
+		h.codec.Handle(func(w ep.ResponseWriter, r *http.Request) {
 			w.Render(h.NotFound())
 		}).ServeHTTP(w, r)
 	}

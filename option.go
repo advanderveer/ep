@@ -6,18 +6,18 @@ import (
 	"github.com/advanderveer/ep/epcoding"
 )
 
-// Option configures the app
-type Option interface{ apply(a *App) }
+// Option configures the codec
+type Option interface{ apply(c *Codec) }
 
 type options []Option
 
-func (o options) apply(a *App) {
+func (o options) apply(c *Codec) {
 	for _, opt := range o {
 		if opt == nil {
 			continue
 		}
 
-		opt.apply(a)
+		opt.apply(c)
 	}
 }
 
@@ -26,27 +26,27 @@ func Options(opts ...Option) Option {
 }
 
 // ResponseEncoding option adds an additional supported response encoding for
-// this app
+// this Codec
 func ResponseEncoding(enc epcoding.Encoding) Option {
 	return responseEncoding{enc}
 }
 
 type responseEncoding struct{ epcoding.Encoding }
 
-func (o responseEncoding) apply(a *App) {
-	a.encodings = append(a.encodings, o.Encoding)
+func (o responseEncoding) apply(c *Codec) {
+	c.encodings = append(c.encodings, o.Encoding)
 }
 
 // RequestDecoding option adds an additional supported request decoding for this
-// app
+// Codec
 func RequestDecoding(dec epcoding.Decoding) Option {
 	return requestDecoding{dec}
 }
 
 type requestDecoding struct{ epcoding.Decoding }
 
-func (o requestDecoding) apply(a *App) {
-	a.decodings = append(a.decodings, o.Decoding)
+func (o requestDecoding) apply(c *Codec) {
+	c.decodings = append(c.decodings, o.Decoding)
 }
 
 // ResponseHook option provides arbitrary modification to the response header just
@@ -55,8 +55,8 @@ func (o requestDecoding) apply(a *App) {
 // method this argument might be nil.
 type ResponseHook func(w http.ResponseWriter, r *http.Request, out interface{})
 
-func (o ResponseHook) apply(a *App) {
-	a.resHooks = append(a.resHooks, o)
+func (o ResponseHook) apply(c *Codec) {
+	c.resHooks = append(c.resHooks, o)
 }
 
 // RequestHook option allows reading arbitrary properties on the request to
@@ -66,8 +66,8 @@ func (o ResponseHook) apply(a *App) {
 // rendered.
 type RequestHook func(r *http.Request, in interface{}) error
 
-func (o RequestHook) apply(a *App) {
-	a.reqHooks = append(a.reqHooks, o)
+func (o RequestHook) apply(c *Codec) {
+	c.reqHooks = append(c.reqHooks, o)
 }
 
 // ErrorHook can be provided as an option to be called whenever an error is
@@ -81,6 +81,6 @@ func (o RequestHook) apply(a *App) {
 // output would be.
 type ErrorHook func(err error) (out interface{})
 
-func (o ErrorHook) apply(a *App) {
-	a.errHooks = append(a.errHooks, o)
+func (o ErrorHook) apply(c *Codec) {
+	c.errHooks = append(c.errHooks, o)
 }

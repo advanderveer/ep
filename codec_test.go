@@ -76,7 +76,7 @@ func BenchmarkHandlers(b *testing.B) {
 	}
 }
 
-func TestAppHandlePanic(t *testing.T) {
+func TestCodecHandlePanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("The code did not panic")
@@ -86,7 +86,7 @@ func TestAppHandlePanic(t *testing.T) {
 	New().Handle(1) // first arg must be a function
 }
 
-func TestAppHandleWithReflection(t *testing.T) {
+func TestCodecHandleWithReflection(t *testing.T) {
 	for i, c := range []struct {
 		fn      interface{}
 		body    string
@@ -118,7 +118,7 @@ func TestAppHandleWithReflection(t *testing.T) {
 	}
 }
 
-func TestAppHandleWithoutReflection(t *testing.T) {
+func TestCodecHandleWithoutReflection(t *testing.T) {
 	errHook := func(err error) (out interface{}) {
 		return struct {
 			Message string `json:"message"`

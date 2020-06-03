@@ -14,7 +14,7 @@ import (
 	"github.com/advanderveer/ep/epcoding"
 )
 
-func TestConcurrentAppHandling(t *testing.T) {
+func TestConcurrentCodecHandling(t *testing.T) {
 	for i, c := range []struct {
 		fn      interface{}
 		body    string

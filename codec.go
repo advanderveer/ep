@@ -7,9 +7,9 @@ import (
 	"github.com/advanderveer/ep/epcoding"
 )
 
-// App holds application wide configuration for binding inputs and rendering
-// outputs.
-type App struct {
+// Codec provides http.Handlers that automatically decode requests and encode
+// responses based on input and output structs
+type Codec struct {
 	resHooks []ResponseHook
 	reqHooks []RequestHook
 	errHooks []ErrorHook
@@ -18,20 +18,20 @@ type App struct {
 	encodings []epcoding.Encoding
 }
 
-// New initiates a new ep application
-func New(opts ...Option) (app *App) {
-	app = &App{}
-	Options(opts...).apply(app)
+// New initiates a new ep Codec
+func New(opts ...Option) (c *Codec) {
+	c = &Codec{}
+	Options(opts...).apply(c)
 	return
 }
 
 // Handle will initiate an http handler that handles request according to
-// the application configuration.
-func (a *App) Handle(f interface{}) http.Handler {
+// the Codec configuration.
+func (c *Codec) Handle(f interface{}) http.Handler {
 	switch ft := f.(type) {
 	case func(ResponseWriter, *http.Request):
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			res := NewResponse(w, r, a.reqHooks, a.resHooks, a.errHooks, a.decodings, a.encodings)
+			res := NewResponse(w, r, c.reqHooks, c.resHooks, c.errHooks, c.decodings, c.encodings)
 			defer res.Recover()
 			ft(res, r)
 		})
@@ -42,7 +42,7 @@ func (a *App) Handle(f interface{}) http.Handler {
 		}
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			res := NewResponse(w, r, a.reqHooks, a.resHooks, a.errHooks, a.decodings, a.encodings)
+			res := NewResponse(w, r, c.reqHooks, c.resHooks, c.errHooks, c.decodings, c.encodings)
 			defer res.Recover()
 
 			ok := true

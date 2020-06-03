@@ -12,8 +12,8 @@ import (
 )
 
 type handler struct {
-	db  map[string]map[string]string
-	app *ep.App
+	db    map[string]map[string]string
+	codec *ep.Codec
 	sync.Mutex
 }
 
@@ -22,14 +22,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/idea":
 		switch r.Method {
 		case http.MethodPost:
-			h.app.Handle(h.CreateIdea).ServeHTTP(w, r)
+			h.codec.Handle(h.CreateIdea).ServeHTTP(w, r)
 		case http.MethodGet:
-			h.app.Handle(h.ListIdeas).ServeHTTP(w, r)
+			h.codec.Handle(h.ListIdeas).ServeHTTP(w, r)
 		default:
-			h.app.Handle(h.MethodNotAllowed).ServeHTTP(w, r)
+			h.codec.Handle(h.MethodNotAllowed).ServeHTTP(w, r)
 		}
 	default:
-		h.app.Handle(func(w ep.ResponseWriter, r *http.Request) {
+		h.codec.Handle(func(w ep.ResponseWriter, r *http.Request) {
 			w.Render(h.NotFound())
 		}).ServeHTTP(w, r)
 	}
@@ -38,7 +38,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func New() http.Handler {
 	logs := log.New(os.Stderr, "", 0)
 
-	return &handler{app: ep.New(
+	return &handler{codec: ep.New(
 		ep.ErrorHook(ephook.NewStandardError(logs)),
 		ep.RequestDecoding(epcoding.JSON{}),
 		ep.ResponseEncoding(epcoding.JSON{}),
