@@ -30,7 +30,7 @@ func (h *handler) CreateIdea(
 	}
 
 	h.db[in.Name] = map[string]string{"name": in.Name}
-	return nil, nil
+	return &CreateIdeaOutput{}, nil
 }
 
 func (in *CreateIdeaInput) Validate() error {

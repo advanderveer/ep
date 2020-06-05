@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/advanderveer/ep/epcoding"
 )
@@ -173,14 +174,23 @@ func (res *response) bind(in interface{}) (ok bool, err error) {
 func (res *response) Render(outs ...interface{}) {
 	var out interface{}
 	for _, o := range outs {
+
 		switch o.(type) {
 		case nil:
 		case error:
 			out = o
 		default:
-			if out == nil {
-				out = o
+			if out != nil {
+				continue
 			}
+
+			// as a special exception it should also skip arguments that are nil
+			// pointers. Overhead has been benchmarked at 3-4ns
+			if rv := reflect.ValueOf(o); rv.Kind() == reflect.Ptr && rv.IsNil() {
+				continue
+			}
+
+			out = o
 		}
 	}
 

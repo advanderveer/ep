@@ -518,6 +518,23 @@ func TestRenderErrorPrecedence(t *testing.T) {
 	res.Render(struct{}{}, e)
 }
 
+func TestRenderSkipArguments(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+	res := newResponse(w, r, nil, nil, nil, nil, []epcoding.Encoding{epcoding.JSON{}})
+
+	// as a special exception, it should skip interface values that are nil
+	// pointers
+	var v *struct{}
+	var vv interface{}
+	vv = v
+
+	res.Render(vv, struct{}{}, struct{ Foo string }{"bar"}, nil)
+	if w.Body.String() != "{}\n" {
+		t.Fatalf("unexpected, got: %v", w.Body.String())
+	}
+}
+
 func TestRenderDoublePassPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -617,6 +634,20 @@ func TestPanicInResponseHook(t *testing.T) {
 
 	if res.runningReqHooks == true {
 		t.Fatalf("should have reset runningReqHooks state, got: %v", res.runningReqHooks)
+	}
+}
+
+var res bool
+
+func BenchmarkReflectIsNil(b *testing.B) {
+	var v *struct{}
+	var vv interface{}
+	vv = v
+
+	for i := 0; i < b.N; i++ {
+		if rv := reflect.ValueOf(vv); rv.Kind() == reflect.Ptr && rv.IsNil() {
+			res = true
+		}
 	}
 
 }

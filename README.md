@@ -64,6 +64,7 @@ __Features:__
 - [x] SHOULD rename coding and hook to `epcoding` and `ephook` 
 - [x] SHOULD rename app, should be open to users of the lib. Overloaded term
 - [x] SHOULD make sure that standard error hook returns valid html (as std lib)
+- [x] SHOULD skip rendering of nil pointers besides just nil
        
 - [ ] COULD  research if it is possible to reduce the nr of allocations when 
              decoding and encoding. It adds about 14 more allocations compared
